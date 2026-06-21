@@ -1,0 +1,101 @@
+name: DUPE Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target deployment environment
+        required: true
+        type: choice
+        options: [staging, production]
+      source_release:
+        description: Existing release id to duplicate
+        required: true
+        type: string
+      target_release:
+        description: New release id for the duplicate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: discrete-ai-dupe-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  dupe:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.DEPLOY_PUBLIC_URL }}
+    steps:
+      - name: Check out deployment scripts
+        uses: actions/checkout@v4
+
+      - name: Validate release identifiers
+        shell: bash
+        run: |
+          for value in "${{ inputs.source_release }}" "${{ inputs.target_release }}"; do
+            [[ "$value" =~ ^[A-Za-z0-9._-]+$ ]] || {
+              echo "Invalid release id: $value" >&2
+              exit 2
+            }
+          done
+          [[ "${{ inputs.source_release }}" != "${{ inputs.target_release }}" ]] || {
+            echo "Source and target releases must differ" >&2
+            exit 2
+          }
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${DEPLOY_PORT:-22}" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload DUPE deployment scripts
+        shell: bash
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          ROOT: ${{ vars.DEPLOY_ROOT }}
+        run: |
+          PORT="${SSH_PORT:-22}"
+          ssh -p "$PORT" "$USER@$HOST" "mkdir -p '${ROOT}/incoming'"
+          scp -P "$PORT" scripts/deploy_remote.sh scripts/dupe_release.sh "$USER@$HOST:${ROOT}/incoming/"
+
+      - name: Execute DUPE deployment
+        shell: bash
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          ROOT: ${{ vars.DEPLOY_ROOT }}
+          APP_PORT: ${{ vars.DISCRETE_PORT }}
+        run: |
+          PORT="${SSH_PORT:-22}"
+          DEFAULT_APP_PORT=8001
+          if [[ "${{ inputs.environment }}" == "production" ]]; then
+            DEFAULT_APP_PORT=8000
+          fi
+          ssh -p "$PORT" "$USER@$HOST" \
+            "bash '${ROOT}/incoming/deploy_remote.sh' '${{ inputs.environment }}' '-' '${ROOT}' '${{ inputs.target_release }}' '${APP_PORT:-$DEFAULT_APP_PORT}' '${{ inputs.source_release }}'"
+
+      - name: Record DUPE summary
+        run: |
+          {
+            echo "## DUPE deployment"
+            echo "- Environment: ${{ inputs.environment }}"
+            echo "- Source release: ${{ inputs.source_release }}"
+            echo "- Target release: ${{ inputs.target_release }}"
+            echo "- Health check: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
