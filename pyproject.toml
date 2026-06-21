@@ -19,6 +19,7 @@ dependencies = []
 
 [project.scripts]
 discrete-art-studio = "cyglobs_app:main"
+discrete-migrate = "scripts.migrate:migrate"
 
 [project.optional-dependencies]
 dev = [
@@ -36,7 +37,7 @@ py-modules = [
   "graphics_runtime",
   "studio_api",
 ]
-packages = ["cyglobs_framework"]
+packages = ["cyglobs_framework", "scripts"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
