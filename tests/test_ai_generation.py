@@ -1,4 +1,5 @@
 import base64
+import hashlib
 
 from ai_generation import GenerationRequest, generate_image, provider_features
 
@@ -41,6 +42,12 @@ def test_generic_provider_saves_base64_image(monkeypatch, tmp_path):
     assert result.image_url.startswith("/storage/ai-")
     saved = tmp_path / result.image_url.removeprefix("/storage/")
     assert saved.read_bytes() == image_bytes
+    assert result.cyglobsgl["radius"] == 0.62
+    assert len(result.cyglobsgl["directive_packet"]) == 16
+    assert result.cyglobsgl["byte_length"] == len(image_bytes)
+    assert result.cyglobsgl["sha256"] == hashlib.sha256(image_bytes).hexdigest()
+    assert "Image Decode" in result.cyglobsgl["pipeline"]
+    assert "Framebuffer" in result.cyglobsgl["pipeline"]
 
 
 def test_provider_features_reports_fallback(monkeypatch):
@@ -49,4 +56,5 @@ def test_provider_features_reports_fallback(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     features = provider_features()
     assert features["real_ai_generation"] is False
+    assert features["cyglobsgl_runtime"] is True
     assert features["cyglobsgl_fallback"] is True
