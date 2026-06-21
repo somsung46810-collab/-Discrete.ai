@@ -16,6 +16,7 @@ from typing import Any
 from urllib import parse, request
 from uuid import uuid4
 
+from ai_generation import generate_image, provider_features
 from cyglobs_framework.comparators import ProtocolComparator
 from cyglobs_framework.config import ServerConfig
 from cyglobs_framework.contingency import FallbackPlanner
@@ -28,8 +29,6 @@ ROOT = Path(__file__).resolve().parent
 STORAGE = Path(os.getenv("DISCRETE_STORAGE_DIR", ROOT / "storage")).resolve()
 DATABASE = Path(os.getenv("DISCRETE_DATABASE_PATH", ROOT / "discrete_art_studio.db")).resolve()
 SECRET_KEY = os.getenv("DISCRETE_SECRET_KEY", "development-only-change-me").encode()
-IMAGE_PROVIDER_URL = os.getenv("DISCRETE_IMAGE_PROVIDER_URL", "")
-IMAGE_PROVIDER_TOKEN = os.getenv("DISCRETE_IMAGE_PROVIDER_TOKEN", "")
 STRIPE_SECRET_KEY = os.getenv("DISCRETE_STRIPE_SECRET_KEY", "")
 STARTING_CREDITS = int(os.getenv("DISCRETE_STARTING_CREDITS", "20"))
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
@@ -109,16 +108,36 @@ def decode_token(token: str) -> int:
 
 
 def provider_generate(prompt: str, style: str, mode: str) -> str:
-    if not IMAGE_PROVIDER_URL:
-        return ""
-    body = json.dumps({"prompt": prompt, "style": style, "mode": mode}).encode()
-    headers = {"Content-Type": "application/json"}
-    if IMAGE_PROVIDER_TOKEN:
-        headers["Authorization"] = f"Bearer {IMAGE_PROVIDER_TOKEN}"
-    req = request.Request(IMAGE_PROVIDER_URL, data=body, headers=headers, method="POST")
-    with request.urlopen(req, timeout=90) as response:
-        data = json.loads(response.read().decode())
-    return str(data.get("image_url", ""))
+    result = generate_image(
+        {
+            "prompt": prompt,
+            "style": style,
+            "mode": mode,
+            "aspect_ratio": "1:1",
+            "quality": "medium",
+            "output_format": "png",
+        },
+        STORAGE,
+    )
+    return result.image_url
+
+
+def generate_image_service(payload: dict[str, Any]) -> dict[str, Any]:
+    return generate_image(payload, STORAGE).to_dict()
+
+
+def feature_requirements_service(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "runtime": "embedded CyGlobs Python framework",
+        "renderer": "CyGlobsGL",
+        "generation": provider_features(),
+        "requirements": [
+            "Python 3.11+",
+            "configured image provider credentials for real AI output",
+            "writable local storage directory",
+            "CyGlobsGL local fallback",
+        ],
+    }
 
 
 def render_manifest(payload: dict[str, Any]) -> dict[str, Any]:
@@ -151,10 +170,12 @@ def render_manifest(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 operations.register("render_manifest", render_manifest)
+operations.register("generate_image", generate_image_service)
+operations.register("feature_requirements", feature_requirements_service)
 
 
 class DiscreteHandler(SimpleHTTPRequestHandler):
-    server_version = "DiscreteCyGlobs/1.0"
+    server_version = "DiscreteCyGlobs/1.1"
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -187,6 +208,7 @@ class DiscreteHandler(SimpleHTTPRequestHandler):
     def do_GET(self) -> None:
         path = parse.urlparse(self.path).path
         if path == "/api/health":
+            features = provider_features()
             self._send_json(
                 HTTPStatus.OK,
                 {
@@ -194,9 +216,13 @@ class DiscreteHandler(SimpleHTTPRequestHandler):
                     "runtime": "CyGlobs Python standard-library server",
                     "renderer": "CyGlobsGL",
                     "database": "sqlite3",
-                    "provider_configured": bool(IMAGE_PROVIDER_URL),
+                    "provider_configured": features["real_ai_generation"],
+                    "image_provider": features["provider"],
                 },
             )
+            return
+        if path == "/api/features":
+            self._send_json(HTTPStatus.OK, feature_requirements_service({}))
             return
         if path == "/api/creations":
             with connect_db() as db:
@@ -250,6 +276,12 @@ class DiscreteHandler(SimpleHTTPRequestHandler):
                         result=operations.execute(envelope.operation, envelope.payload),
                     )
                 self._send_json(HTTPStatus.OK, response.to_dict())
+                return
+            if path == "/api/generate":
+                self._send_json(
+                    HTTPStatus.CREATED,
+                    generate_image_service(body),
+                )
                 return
             if path == "/api/auth/register":
                 email = str(body.get("email", "")).strip().lower()
