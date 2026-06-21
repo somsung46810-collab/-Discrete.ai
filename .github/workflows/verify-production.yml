@@ -1,0 +1,44 @@
+name: Verify Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to verify
+        required: true
+        type: choice
+        options: [staging, production]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ vars.DEPLOY_PUBLIC_URL }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run deployed environment smoke tests
+        env:
+          DEPLOY_PUBLIC_URL: ${{ vars.DEPLOY_PUBLIC_URL }}
+        run: |
+          test -n "$DEPLOY_PUBLIC_URL"
+          python scripts/production_smoke_test.py "$DEPLOY_PUBLIC_URL"
+
+      - name: Write verification summary
+        run: |
+          {
+            echo "## Deployment verification"
+            echo "- Environment: ${{ inputs.environment }}"
+            echo "- URL: ${{ vars.DEPLOY_PUBLIC_URL }}"
+            echo "- Health and feature checks: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
