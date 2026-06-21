@@ -1,0 +1,39 @@
+{
+    email ADMIN_EMAIL
+}
+
+STAGING_DOMAIN {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8001
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    log {
+        output file /var/log/caddy/discrete-staging.log
+        format json
+    }
+}
+
+PRODUCTION_DOMAIN {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8000
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    log {
+        output file /var/log/caddy/discrete-production.log
+        format json
+    }
+}
