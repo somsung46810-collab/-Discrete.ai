@@ -51,10 +51,18 @@ Open `http://127.0.0.1:8000`.
 ## Validate
 
 ```bash
-ruff check ai_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework tests
+ruff check ai_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework scripts tests
 pytest --cov=ai_generation --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
 python -m build
 ```
+
+## Continuous deployment
+
+`.github/workflows/deploy.yml` provides native staging and production deployment over SSH. It builds release artifacts, injects GitHub environment secrets, runs versioned SQLite migrations, restarts `cyglobs_app` through user-level systemd, checks `/api/health`, and automatically restores the previous release when the health check fails.
+
+Successful pushes to `main` deploy to the protected `staging` environment after Python CI passes. Production is promoted manually or by pushing a version tag such as `v0.4.1`. Successful tagged production deployments publish a GitHub Release.
+
+See `DEPLOYMENT.md` for required GitHub secrets, environment variables, approval gates, remote-host prerequisites, release layout, and rollback procedures.
 
 ## Capabilities
 
@@ -65,3 +73,4 @@ python -m build
 - Automatic CyGlobsGL fallback
 - SQLite users, creations, likes, and credits
 - Local uploads and generated-image downloads
+- Native CI/CD with staging, production, migrations, health checks, release publishing, and rollback
