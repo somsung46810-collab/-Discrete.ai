@@ -18,6 +18,18 @@ const mode = document.getElementById('mode');
 const aspect = document.getElementById('aspect');
 const toast = document.getElementById('toast');
 
+async function callFramework(operation, payload = {}) {
+  const response = await fetch('/rpc', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ protocol_version: '1.0', operation, payload })
+  });
+  if (!response.ok) throw new Error(`RPC request failed: ${response.status}`);
+  const envelope = await response.json();
+  if (envelope.status !== 'ok') throw new Error(envelope.error || 'CyGlobs framework error');
+  return envelope.result;
+}
+
 function applyAspect() {
   const preview = document.querySelector('.preview-art');
   const ratio = aspect.value.split(' ')[0];
@@ -26,21 +38,38 @@ function applyAspect() {
   renderer.resize();
 }
 
-function renderArtwork() {
+async function renderArtwork() {
   const button = document.getElementById('generate');
   button.disabled = true;
-  button.innerHTML = '<span>◌</span> Applying MVP directives...';
-  const result = renderer.generate({ prompt: prompt.value.trim(), style: style.value, mode: mode.value });
+  button.innerHTML = '<span>◌</span> Validating CyGlobs directives...';
+
+  const localResult = renderer.generate({ prompt: prompt.value.trim(), style: style.value, mode: mode.value });
+  let frameworkStatus = 'local fallback';
+
+  try {
+    const manifest = await callFramework('render_manifest', {
+      prompt: prompt.value.trim(),
+      style: style.value,
+      mode: mode.value,
+      aspect_ratio: aspect.value.split(' ')[0]
+    });
+    frameworkStatus = manifest.pipeline.join(' → ');
+    toast.textContent = 'CyGlobs RPC validated; framebuffer rendered locally';
+  } catch (error) {
+    console.info('CyGlobs server unavailable; continuing with local renderer.', error);
+    toast.textContent = 'Local CyGlobsGL render complete; RPC server offline';
+  }
+
   document.getElementById('previewTitle').textContent = prompt.value.trim().split(/[,.]/)[0] || 'CyGlobsGL Creation';
   document.getElementById('previewMeta').textContent = `CyGlobsGL • ${mode.value} • radius 0.62`;
-  document.getElementById('packetHex').textContent = result.packet;
-  toast.textContent = 'CyGlobsGL framebuffer rendered locally';
+  document.getElementById('packetHex').textContent = `${localResult.packet} · ${frameworkStatus}`;
   toast.classList.add('show');
+
   setTimeout(() => {
     button.disabled = false;
     button.innerHTML = '<span>✦</span> Render with CyGlobsGL <kbd>Ctrl ↵</kbd>';
     toast.classList.remove('show');
-  }, 900);
+  }, 1100);
 }
 
 document.querySelectorAll('[data-add]').forEach((button) => button.addEventListener('click', () => {
