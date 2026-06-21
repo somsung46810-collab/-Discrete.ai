@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discrete-ai"
-version = "0.2.0"
-description = "Discrete Art Studio with CyGlobs framework, rendering, authentication, storage, and deployment support"
+version = "0.3.0"
+description = "Discrete Art Studio powered by the embedded CyGlobs Python framework and CyGlobsGL"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -15,33 +15,26 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
-dependencies = [
-  "fastapi>=0.115,<1.0",
-  "uvicorn[standard]>=0.34,<1.0",
-  "pydantic>=2.10,<3.0",
-  "pydantic-settings>=2.7,<3.0",
-  "email-validator>=2.2,<3.0",
-  "sqlalchemy>=2.0,<3.0",
-  "PyJWT>=2.10,<3.0",
-  "pwdlib[argon2]>=0.2,<1.0",
-  "python-multipart>=0.0.20,<1.0",
-  "aiofiles>=24.1,<25.0",
-  "httpx>=0.28,<1.0",
-  "Pillow>=11.0,<12.0",
-  "stripe>=11.0,<13.0",
-]
+dependencies = []
+
+[project.scripts]
+discrete-art-studio = "cyglobs_app:main"
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
-  "pytest-asyncio>=0.25",
   "pytest-cov>=6.0",
   "ruff>=0.9",
   "mypy>=1.14",
 ]
 
 [tool.setuptools]
-py-modules = ["discrete_ai", "graphics_runtime", "discrete_server", "studio_api"]
+py-modules = [
+  "cyglobs_app",
+  "discrete_ai",
+  "graphics_runtime",
+  "studio_api",
+]
 packages = ["cyglobs_framework"]
 
 [tool.pytest.ini_options]
