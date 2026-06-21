@@ -1,4 +1,5 @@
 import importlib.util
+import sys
 from pathlib import Path
 
 from graphics_runtime import Directive as ActiveDirective
@@ -14,16 +15,20 @@ def load_upstream_directives():
         / "cyglobsgl"
         / "directives.py"
     )
-    spec = importlib.util.spec_from_file_location("vendored_cyglobsgl_directives", path)
+    module_name = "vendored_cyglobsgl_directives"
+    spec = importlib.util.spec_from_file_location(module_name, path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
 
 
 def test_active_packet_matches_vendored_cyglobsgl():
     upstream = load_upstream_directives()
-    active = ActivePacket(ActiveDirective(ActiveOpcode.ROTATE, 7, 0.25, 0.62, 0.0)).to_hex()
+    active = ActivePacket(
+        ActiveDirective(ActiveOpcode.ROTATE, 7, 0.25, 0.62, 0.0)
+    ).to_hex()
     reference = upstream.DirectivePacket(
         upstream.Directive(upstream.Opcode.ROTATE, 7, 0.25, 0.62, 0.0)
     ).to_hex()
