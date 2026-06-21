@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Discrete Art Studio — an original AI art creation and discovery interface powered by CyGlobs." />
+  <title>Discrete Art Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">D</span><span>Discrete</span><small>ART STUDIO</small></a>
+    <nav class="nav" aria-label="Primary">
+      <a class="active" href="#discover">Discover</a><a href="#create">Create</a><a href="#models">Models</a><a href="#community">Community</a>
+    </nav>
+    <div class="top-actions"><button class="ghost">Sign in</button><button class="primary">Start creating</button></div>
+  </header>
+
+  <main>
+    <section class="hero" id="discover">
+      <div class="hero-copy">
+        <div class="eyebrow">DISCRETE.AI × CYGLOBS</div>
+        <h1>Turn a thought into<br><span>visual worlds.</span></h1>
+        <p>Create, remix, and explore original AI artwork through a fast, cinematic interface powered by the CyGlobs rendering stack.</p>
+        <div class="hero-buttons"><a class="primary large" href="#create">Create artwork</a><a class="ghost large" href="#gallery">Explore gallery</a></div>
+        <div class="stats"><div><b>24K+</b><span>creations</span></div><div><b>42</b><span>style presets</span></div><div><b>3</b><span>render engines</span></div></div>
+      </div>
+      <div class="hero-visual" aria-label="Featured generative artwork">
+        <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="grid-lines"></div>
+        <div class="hero-card"><span class="badge">FEATURED</span><h3>Neon Sanctuary</h3><p>CyGlobsGL • cinematic render</p></div>
+      </div>
+    </section>
+
+    <section class="studio section" id="create">
+      <div class="section-heading"><div><span class="eyebrow">CREATION STUDIO</span><h2>Describe what you imagine</h2></div><span class="status"><i></i> Engines online</span></div>
+      <div class="studio-grid">
+        <div class="composer panel">
+          <label for="prompt">Prompt</label>
+          <textarea id="prompt" rows="6">A radiant cyber-temple suspended above a violet ocean, translucent architecture, cinematic volumetric light, highly detailed</textarea>
+          <div class="suggestions"><button data-add="golden hour">golden hour</button><button data-add="wide angle">wide angle</button><button data-add="ultra detailed">ultra detailed</button><button data-add="neon">neon</button></div>
+          <div class="control-row">
+            <label>Engine<select id="engine"><option>Discrete Fusion</option><option>CyGlobsGL Render</option><option>CyGlobs Python Pipeline</option></select></label>
+            <label>Aspect<select id="aspect"><option>1:1 Square</option><option>16:9 Landscape</option><option>9:16 Portrait</option></select></label>
+          </div>
+          <div class="control-row"><label>Style<select id="style"><option>Cinematic</option><option>Fantasy</option><option>Anime</option><option>Photoreal</option><option>Abstract</option></select></label><label>Outputs<select id="count"><option>1 image</option><option>2 images</option><option>4 images</option></select></label></div>
+          <button class="generate" id="generate"><span>✦</span> Generate artwork <kbd>Ctrl ↵</kbd></button>
+        </div>
+        <div class="preview panel" id="preview">
+          <div class="preview-art"><div class="preview-glow"></div><div class="temple"></div></div>
+          <div class="preview-meta"><div><span class="badge">PREVIEW</span><h3 id="previewTitle">Radiant Cyber-Temple</h3><p id="previewMeta">Discrete Fusion • 1:1 • Cinematic</p></div><button class="icon-btn" title="Download">↓</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="gallery">
+      <div class="section-heading"><div><span class="eyebrow">TRENDING NOW</span><h2>Community creations</h2></div><button class="ghost">View all</button></div>
+      <div class="filters"><button class="active">Featured</button><button>Fantasy</button><button>Photography</button><button>Anime</button><button>Abstract</button><button>Architecture</button></div>
+      <div class="masonry" id="galleryGrid"></div>
+    </section>
+
+    <section class="section models" id="models">
+      <div class="section-heading"><div><span class="eyebrow">RENDER STACK</span><h2>Choose your creative engine</h2></div></div>
+      <div class="model-grid">
+        <article class="model-card"><span class="model-icon">D</span><h3>Discrete Fusion</h3><p>Balanced prompt interpretation for polished concept art and rapid ideation.</p><span class="pill">Default</span></article>
+        <article class="model-card"><span class="model-icon">GL</span><h3>CyGlobsGL</h3><p>GPU-oriented visual pipeline for procedural geometry, shaders, and 3D previews.</p><span class="pill">Realtime</span></article>
+        <article class="model-card"><span class="model-icon">PY</span><h3>CyGlobs Python</h3><p>Backend orchestration, job queues, image processing, and extension hooks.</p><span class="pill">Extensible</span></article>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="brand"><span class="brand-mark">D</span><span>Discrete</span></div><p>Original AI creation interface powered by the CyGlobs ecosystem.</p><span>© 2026 Discrete.ai</span></footer>
+  <div class="toast" id="toast">Generation started</div>
+  <script src="app.js"></script>
+</body>
+</html>
