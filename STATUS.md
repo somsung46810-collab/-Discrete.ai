@@ -1,49 +1,41 @@
 # Discrete Art Studio Status
 
-## Dependency resolution
+## Runtime alignment
 
-The repository uses a native Python stack with synchronized declarations in `requirements.txt` and `pyproject.toml`:
+Discrete Art Studio now runs on the embedded CyGlobs Python framework and CyGlobsGL.
 
-- FastAPI and Uvicorn
-- Pydantic settings and email validation
-- SQLAlchemy persistence
-- JWT authentication and Argon2 password hashing
-- Multipart uploads and local storage
-- HTTP image-provider integration
-- Pillow image support
-- Stripe checkout
-- Pytest, coverage, Ruff, and mypy
-- GitHub Actions for native Python validation
+Production runtime dependencies are limited to Python 3.11 or newer. The application uses `http.server`, `sqlite3`, `hashlib`, `hmac`, `urllib`, and other standard-library modules for serving, persistence, authentication, storage, provider calls, and payment requests.
 
-Flask is not used. Container deployment is not part of the supported stack.
+Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, and container tooling are excluded from the supported architecture.
 
 ## Current completion
 
 | Component | Previous | Current | State |
 |---|---:|---:|---|
 | Responsive website and visual design | 90% | 92% | Responsive interface remains operational |
-| Prompt creation studio | 80% | 88% | CyGlobs controls and backend creation model are present |
-| Discovery gallery and model cards | 85% | 88% | Public creation-list API and gallery UI are present |
-| Flask API structure | 65% | 100% replaced | FastAPI is the supported service layer |
-| CyGlobs Python integration | 25% | 84% | Framework components are embedded and dependency-aligned |
-| CyGlobsGL live rendering | 20% | 80% | Browser framebuffer, MVP transforms, modes, and packets work |
-| Real AI image generation | 10% | 55% | Provider adapter is implemented; provider credentials are required |
-| Authentication and user profiles | 0% | 75% | Registration, login, JWT identity, profile, and credits are implemented |
-| Database, saved creations, likes | 0% | 80% | SQLAlchemy models, SQLite, persistence, and likes are implemented |
-| File storage and downloads | 15% | 75% | Upload validation, local storage, and PNG downloads are implemented |
-| Payments or usage credits | 0% | 60% | Credits and Stripe Checkout are implemented |
-| Testing, security, and deployment | 30% | 74% | Native Python CI, pip checks, tests, hashing, and JWT are present |
+| Prompt creation studio | 80% | 90% | CyGlobs prompt controls, manifest validation, and local rendering are connected |
+| Discovery gallery and model cards | 85% | 88% | Gallery UI and public creation feed are available |
+| Embedded CyGlobs HTTP/RPC runtime | 65% | 88% | Standard-library server replaces all web-framework dependencies |
+| CyGlobs Python integration | 25% | 90% | Protocol, comparator, routing, retry, fallback, configuration, and services are embedded |
+| CyGlobsGL live rendering | 20% | 82% | Browser framebuffer, MVP transforms, modes, packets, and PNG output work |
+| Real AI image generation | 10% | 55% | Provider adapter works through standard-library HTTPS; provider credentials are required |
+| Authentication and user profiles | 0% | 78% | Registration, login, signed tokens, profile lookup, and credits are implemented |
+| Database, saved creations, likes | 0% | 82% | Native SQLite persistence, creation storage, and likes are implemented |
+| File storage and downloads | 15% | 78% | Base64 upload validation, local storage, serving, and PNG downloads are implemented |
+| Payments or usage credits | 0% | 60% | Local credits and direct Stripe Checkout requests are implemented |
+| Testing, security, and deployment | 30% | 78% | Native HTTP tests, coverage, linting, package builds, token signing, and hashing are present |
 
 ## Overall estimate
 
-- Local procedural-art MVP: **94%**
-- Installable full-stack application: **80%**
-- Production service with external providers: **69%**
+- Local procedural-art MVP: **95%**
+- Installable embedded full-stack application: **84%**
+- Production service with external providers: **71%**
 
 ## Remaining production work
 
-1. Configure a real image-generation provider.
-2. Add Stripe webhook verification and idempotent credit settlement.
-3. Add database migrations and optional PostgreSQL configuration.
+1. Configure and validate a real image-generation provider.
+2. Add verified payment webhooks and idempotent credit settlement.
+3. Add schema migrations and backup tooling for SQLite.
 4. Add refresh tokens, email verification, password reset, and rate limiting.
-5. Connect all browser account controls to the authentication and creation APIs.
+5. Connect every account and gallery control in the browser to the native JSON endpoints.
+6. Add broader browser automation and concurrency testing.
