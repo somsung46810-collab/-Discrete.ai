@@ -1,78 +1,45 @@
 # Featured Requirements
 
-## Real AI generation
+## CyGlobsGL Python generation
 
-Discrete Art Studio supports two real image-generation provider modes without adding production packages outside the repository runtime.
+Discrete Art Studio uses one local generation engine: the CyGlobsGL Python framework.
 
-### OpenAI image provider
+No external image provider, model endpoint, provider token, or outbound generation request is used.
 
-Required environment variables:
+## Generation process
 
-```text
-DISCRETE_IMAGE_PROVIDER=openai
-OPENAI_API_KEY=your-key
-DISCRETE_IMAGE_MODEL=gpt-image-2
-```
-
-Optional override:
-
-```text
-DISCRETE_IMAGE_PROVIDER_URL=https://api.openai.com/v1/images/generations
-```
-
-The provider returns base64 image data, which Discrete.ai writes to the configured storage directory and serves through `/storage/`.
-
-### Generic JSON provider
-
-Required environment variables:
-
-```text
-DISCRETE_IMAGE_PROVIDER=generic
-DISCRETE_IMAGE_PROVIDER_URL=https://provider.example/generate
-DISCRETE_IMAGE_PROVIDER_TOKEN=your-token
-DISCRETE_IMAGE_MODEL=provider-model
-```
-
-Accepted response shapes include:
-
-```json
-{"image_url":"https://provider.example/image.png"}
-```
-
-```json
-{"b64_json":"BASE64_IMAGE_DATA"}
-```
-
-```json
-{"data":[{"url":"https://provider.example/image.png"}]}
-```
-
-```json
-{"data":[{"b64_json":"BASE64_IMAGE_DATA"}]}
-```
+1. Validate prompt, mode, aspect ratio, and complexity.
+2. Derive a deterministic SHA-256 seed from the request.
+3. Select a local color palette and procedural geometry.
+4. Render Wireframe, Triangles, or Contingency geometry.
+5. Add CyGlobsGL transform rings and metadata.
+6. Save the generated SVG under `DISCRETE_STORAGE_DIR`.
+7. Return the local `/storage/` URL and CyGlobsGL runtime metadata.
 
 ## Repository-provided packages
 
 The active stack uses:
 
-- `cyglobs_framework/` for request envelopes, protocol comparison, operation routing, retry, and fallback behavior.
-- `graphics_runtime.py` for CyGlobsGL directive packets and render-manifest metadata.
-- `cyglobsgl.js` for browser MVP and framebuffer fallback rendering.
-- `ai_generation.py` for provider requests, response normalization, output persistence, and feature reporting.
-- Python standard-library `urllib`, `json`, `base64`, `pathlib`, and `uuid` for provider transport and file output.
+- `cyglobs_framework/` for request envelopes, protocol comparison, operation routing, retry, and contingency behavior.
+- `cyglobsgl_generation.py` for deterministic local procedural generation.
+- `graphics_runtime.py` for CyGlobsGL directive packets, hashes, dimensions, and pipeline metadata.
+- `cyglobsgl.js` for browser MVP and framebuffer rendering.
+- `ai_generation.py` only as a backward-compatible import alias; it contains no provider transport.
+- Python standard-library `hashlib`, `html`, `math`, `pathlib`, `random`, and `uuid` for local generation and file output.
 
-Vendored reference snapshots are available under `vendor/` and are checked against the active directive-packet implementation by `tests/test_vendor_sync.py`.
+Vendored reference snapshots remain under `vendor/` and are checked against the active directive-packet implementation.
 
 ## Generation controls
 
 The browser studio provides:
 
-- Real AI or CyGlobsGL-only engine selection
+- CyGlobsGL Python engine selection
 - Square, landscape, and portrait aspect ratios
-- Low, medium, high, or automatic quality
-- PNG, WebP, or JPEG output
-- Downloadable provider output
-- Automatic CyGlobsGL fallback when the provider is unconfigured or unavailable
+- Low, medium, high, or automatic geometry complexity
+- Wireframe, Triangles, and Contingency modes
+- SVG output
+- Downloadable local output
+- Browser framebuffer rendering when the server route is unavailable
 
 ## Runtime endpoints
 
@@ -85,6 +52,6 @@ The browser studio provides:
 
 - Python 3.11 or newer
 - Writable `DISCRETE_STORAGE_DIR`
-- Provider credentials for real AI generation
-- Network access to the configured provider
+- No image-provider credentials
+- No generation network access
 - No Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container runtime
