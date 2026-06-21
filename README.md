@@ -12,6 +12,15 @@ Discrete Art Studio runs on the embedded CyGlobs Python framework and CyGlobsGL.
 
 The application does not use Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container tooling.
 
+## Upstream source snapshots
+
+- `vendor/cyglobs_python_framework/` stores the required framework source snapshot.
+- `vendor/cyglobsgl_upstream/` stores the required CyGlobsGL source snapshot.
+- `tests/test_vendor_sync.py` checks packet compatibility between CyGlobsGL and the active runtime.
+- `THIRD_PARTY_NOTICES.md` records source provenance and license information.
+
+The active integrated code remains in `cyglobs_framework/`, `graphics_runtime.py`, `cyglobs_app.py`, and `cyglobsgl.js`.
+
 ## Install
 
 Python 3.11 or 3.12 is recommended.
