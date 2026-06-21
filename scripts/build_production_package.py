@@ -14,8 +14,10 @@ STAGE = OUTPUT / "discrete-art-studio"
 
 INCLUDE_FILES = [
     ".env.example",
+    "ALTERNATIVE_EXECUTION.md",
     "DEPLOYMENT.md",
     "FEATURE_REQUIREMENTS.md",
+    "PRODUCTION_COMPLETION.md",
     "README.md",
     "STATUS.md",
     "THIRD_PARTY_NOTICES.md",
@@ -24,6 +26,7 @@ INCLUDE_FILES = [
     "cyglobs_app.py",
     "cyglobsgl.css",
     "cyglobsgl.js",
+    "cyglobsgl_generation.py",
     "discrete_ai.py",
     "graphics_runtime.py",
     "index.html",
@@ -35,6 +38,7 @@ INCLUDE_FILES = [
 
 INCLUDE_DIRS = [
     "cyglobs_framework",
+    "deploy",
     "scripts",
     "vendor",
 ]
@@ -87,6 +91,8 @@ def write_manifest() -> None:
     manifest = {
         "name": "Discrete Art Studio",
         "package": "discrete-ai",
+        "engine": "cyglobsgl-python",
+        "external_image_provider": False,
         "entrypoint": "python -m cyglobs_app",
         "health_endpoint": "/api/health",
         "python": ">=3.11",
