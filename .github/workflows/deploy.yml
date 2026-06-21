@@ -74,7 +74,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
           python -m pip check
-          ruff check ai_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework scripts tests
+          ruff check ai_generation.py cyglobsgl_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework scripts tests
           pytest
           python -m pip install build
           python -m build
@@ -110,19 +110,14 @@ jobs:
       name: staging
       url: ${{ vars.DEPLOY_PUBLIC_URL }}
     steps:
-      - name: Check out deployment scripts
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.source_sha }}
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: discrete-ai-${{ needs.prepare.outputs.release_id }}
           path: deployment
-
       - name: Configure SSH
-        shell: bash
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -133,32 +128,18 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${DEPLOY_PORT:-22}" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-
-      - name: Create environment file
-        shell: bash
+      - name: Create CyGlobsGL environment file
         env:
           DISCRETE_SECRET_KEY: ${{ secrets.DISCRETE_SECRET_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          IMAGE_PROVIDER: ${{ vars.DISCRETE_IMAGE_PROVIDER }}
-          IMAGE_MODEL: ${{ vars.DISCRETE_IMAGE_MODEL }}
-          IMAGE_PROVIDER_URL: ${{ secrets.DISCRETE_IMAGE_PROVIDER_URL }}
-          IMAGE_PROVIDER_TOKEN: ${{ secrets.DISCRETE_IMAGE_PROVIDER_TOKEN }}
           STRIPE_SECRET_KEY: ${{ secrets.DISCRETE_STRIPE_SECRET_KEY }}
         run: |
           umask 077
           cat > deployment/runtime.env <<EOF
           DISCRETE_ENV=staging
           DISCRETE_SECRET_KEY=$DISCRETE_SECRET_KEY
-          DISCRETE_IMAGE_PROVIDER=${IMAGE_PROVIDER:-openai}
-          DISCRETE_IMAGE_MODEL=${IMAGE_MODEL:-gpt-image-2}
-          DISCRETE_IMAGE_PROVIDER_URL=$IMAGE_PROVIDER_URL
-          DISCRETE_IMAGE_PROVIDER_TOKEN=$IMAGE_PROVIDER_TOKEN
-          OPENAI_API_KEY=$OPENAI_API_KEY
           DISCRETE_STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
           EOF
-
       - name: Deploy staging release
-        shell: bash
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           USER: ${{ secrets.DEPLOY_USER }}
@@ -182,19 +163,14 @@ jobs:
       name: production
       url: ${{ vars.DEPLOY_PUBLIC_URL }}
     steps:
-      - name: Check out deployment scripts
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.source_sha }}
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: discrete-ai-${{ needs.prepare.outputs.release_id }}
           path: deployment
-
       - name: Configure SSH
-        shell: bash
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -205,32 +181,18 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${DEPLOY_PORT:-22}" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-
-      - name: Create environment file
-        shell: bash
+      - name: Create CyGlobsGL environment file
         env:
           DISCRETE_SECRET_KEY: ${{ secrets.DISCRETE_SECRET_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          IMAGE_PROVIDER: ${{ vars.DISCRETE_IMAGE_PROVIDER }}
-          IMAGE_MODEL: ${{ vars.DISCRETE_IMAGE_MODEL }}
-          IMAGE_PROVIDER_URL: ${{ secrets.DISCRETE_IMAGE_PROVIDER_URL }}
-          IMAGE_PROVIDER_TOKEN: ${{ secrets.DISCRETE_IMAGE_PROVIDER_TOKEN }}
           STRIPE_SECRET_KEY: ${{ secrets.DISCRETE_STRIPE_SECRET_KEY }}
         run: |
           umask 077
           cat > deployment/runtime.env <<EOF
           DISCRETE_ENV=production
           DISCRETE_SECRET_KEY=$DISCRETE_SECRET_KEY
-          DISCRETE_IMAGE_PROVIDER=${IMAGE_PROVIDER:-openai}
-          DISCRETE_IMAGE_MODEL=${IMAGE_MODEL:-gpt-image-2}
-          DISCRETE_IMAGE_PROVIDER_URL=$IMAGE_PROVIDER_URL
-          DISCRETE_IMAGE_PROVIDER_TOKEN=$IMAGE_PROVIDER_TOKEN
-          OPENAI_API_KEY=$OPENAI_API_KEY
           DISCRETE_STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
           EOF
-
       - name: Deploy production release
-        shell: bash
         env:
           HOST: ${{ secrets.DEPLOY_HOST }}
           USER: ${{ secrets.DEPLOY_USER }}
@@ -251,12 +213,10 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v') && needs.deploy-production.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Download release artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: discrete-ai-${{ needs.prepare.outputs.release_id }}
           path: deployment
-
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

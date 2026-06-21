@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discrete-ai"
-version = "0.4.0"
-description = "Discrete Art Studio with real AI generation, embedded CyGlobs Python, and CyGlobsGL fallback"
+version = "0.5.0"
+description = "Discrete Art Studio powered only by the CyGlobsGL Python framework"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -20,6 +20,7 @@ dependencies = []
 [project.scripts]
 discrete-art-studio = "cyglobs_app:main"
 discrete-migrate = "scripts.migrate:migrate"
+discrete-media-check = "scripts.media_check:main"
 
 [project.optional-dependencies]
 dev = [
@@ -32,9 +33,11 @@ dev = [
 [tool.setuptools]
 py-modules = [
   "ai_generation",
+  "cyglobsgl_generation",
   "cyglobs_app",
   "discrete_ai",
   "graphics_runtime",
+  "media_diagnostics",
   "studio_api",
 ]
 packages = ["cyglobs_framework", "scripts"]
