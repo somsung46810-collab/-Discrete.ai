@@ -1,0 +1,85 @@
+name: Discrete.ai Project Progress
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  progress:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Calculate weighted completion
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          definition=0
+          specification=0
+          runtime=0
+          tests=0
+          packaging=0
+
+          if [[ -f README.md && -f STATUS.md ]]; then
+            definition=100
+          fi
+
+          if [[ -f SPEC.md ]]; then
+            specification=100
+          fi
+
+          if [[ -f discrete_ai.py ]]; then
+            runtime=100
+          fi
+
+          if [[ -d tests ]] && find tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then
+            tests=100
+          fi
+
+          if [[ -f pyproject.toml || -f setup.py || -f setup.cfg ]]; then
+            if [[ -f README.md && -d .github/workflows ]]; then
+              packaging=100
+            fi
+          fi
+
+          total=$((
+            definition * 10 / 100 +
+            specification * 20 / 100 +
+            runtime * 40 / 100 +
+            tests * 20 / 100 +
+            packaging * 10 / 100
+          ))
+
+          {
+            echo '# Discrete.ai Project Progress'
+            echo
+            echo '| Component | Estimated weight | Completion |'
+            echo '| --- | ---: | ---: |'
+            echo "| Project definition and status | 10% | ${definition}% |"
+            echo "| Technical specification | 20% | ${specification}% |"
+            echo "| Python runtime implementation | 40% | ${runtime}% |"
+            echo "| Automated tests and debugging | 20% | ${tests}% |"
+            echo "| Packaging, usage docs, and CI | 10% | ${packaging}% |"
+            echo
+            echo "## Weighted completion: ${total}%"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "DISCRETE_AI_COMPLETION=${total}" >> "$GITHUB_ENV"
+
+      - name: Verify committed baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f README.md
+          test -f SPEC.md
+          test -f STATUS.md
+          echo "Committed baseline verified at ${DISCRETE_AI_COMPLETION}% completion."
