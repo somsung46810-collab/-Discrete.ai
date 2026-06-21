@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="Discrete Art Studio with real AI image generation and CyGlobsGL fallback." />
+  <meta name="description" content="Discrete Art Studio powered only by the CyGlobsGL Python framework." />
   <title>Discrete Art Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,36 +21,36 @@
   <main>
     <section class="hero" id="discover">
       <div class="hero-copy">
-        <div class="eyebrow">DISCRETE.AI × CYGLOBSGL × REAL AI</div>
+        <div class="eyebrow">DISCRETE.AI × CYGLOBSGL PYTHON</div>
         <h1>Turn a thought into<br><span>visual worlds.</span></h1>
-        <p>Generate finished AI artwork through a configured provider with CyGlobs validation and local framebuffer fallback.</p>
+        <p>Generate deterministic procedural artwork locally through the CyGlobsGL Python framework with no external image provider.</p>
         <div class="hero-buttons"><a class="primary large" href="#create">Create artwork</a><a class="ghost large" href="#gallery">Explore gallery</a></div>
-        <div class="stats"><div><b>AI</b><span>provider output</span></div><div><b>0.62</b><span>default radius</span></div><div><b>Fallback</b><span>local rendering</span></div></div>
+        <div class="stats"><div><b>Local</b><span>generation engine</span></div><div><b>0.62</b><span>default radius</span></div><div><b>Offline</b><span>network optional</span></div></div>
       </div>
-      <div class="hero-visual"><div class="orb orb-a"></div><div class="orb orb-b"></div><div class="grid-lines"></div><div class="hero-card"><span class="badge">FEATURED</span><h3>Neon Sanctuary</h3><p>AI generation • CyGlobs validated</p></div></div>
+      <div class="hero-visual"><div class="orb orb-a"></div><div class="orb orb-b"></div><div class="grid-lines"></div><div class="hero-card"><span class="badge">FEATURED</span><h3>Neon Sanctuary</h3><p>CyGlobsGL procedural generation</p></div></div>
     </section>
     <section class="studio section" id="create">
-      <div class="section-heading"><div><span class="eyebrow">CREATION STUDIO</span><h2>Generate and render</h2></div><span class="status" id="providerStatus"><i></i> Checking provider</span></div>
+      <div class="section-heading"><div><span class="eyebrow">CREATION STUDIO</span><h2>Generate and render</h2></div><span class="status" id="providerStatus"><i></i> Checking CyGlobsGL runtime</span></div>
       <div class="studio-grid">
         <div class="composer panel">
           <label for="prompt">Prompt</label>
           <textarea id="prompt" rows="6">A radiant cyber-temple suspended above a violet ocean, translucent architecture, cinematic volumetric light, highly detailed</textarea>
           <div class="suggestions"><button data-add="golden hour">golden hour</button><button data-add="wide angle">wide angle</button><button data-add="ultra detailed">ultra detailed</button><button data-add="neon">neon</button></div>
-          <div class="control-row"><label>Engine<select id="engine"><option value="ai">Real AI + CyGlobs fallback</option><option value="cyglobs">CyGlobsGL only</option></select></label><label>Aspect<select id="aspect"><option>1:1 Square</option><option>16:9 Landscape</option><option>9:16 Portrait</option></select></label></div>
+          <div class="control-row"><label>Engine<select id="engine"><option value="cyglobsgl">CyGlobsGL Python</option></select></label><label>Aspect<select id="aspect"><option>1:1 Square</option><option>16:9 Landscape</option><option>9:16 Portrait</option></select></label></div>
           <div class="control-row"><label>Style<select id="style"><option>Cinematic</option><option>Fantasy</option><option>Anime</option><option>Photoreal</option><option>Abstract</option></select></label><label>Mode<select id="mode"><option>Wireframe</option><option>Triangles</option><option>Contingency</option></select></label></div>
-          <div class="control-row"><label>Quality<select id="quality"><option>medium</option><option>low</option><option>high</option><option>auto</option></select></label><label>Format<select id="outputFormat"><option>png</option><option>webp</option><option>jpeg</option></select></label></div>
+          <div class="control-row"><label>Complexity<select id="quality"><option>medium</option><option>low</option><option>high</option><option>auto</option></select></label><label>Format<select id="outputFormat"><option>svg</option></select></label></div>
           <button class="generate" id="generate"><span>✦</span> Generate artwork <kbd>Ctrl ↵</kbd></button>
         </div>
         <div class="preview panel" id="preview">
-          <div class="preview-art"><canvas id="cyglobsCanvas" aria-label="CyGlobsGL render output"></canvas><img id="aiImage" alt="Generated AI artwork" hidden></div>
-          <div class="preview-meta"><div><span class="badge" id="previewBadge">LIVE FRAMEBUFFER</span><h3 id="previewTitle">Radiant Cyber-Temple</h3><p id="previewMeta">CyGlobsGL • Wireframe • radius 0.62</p><code id="packetHex">30070000009f0000</code></div><button class="icon-btn" id="downloadRender" title="Download image">↓</button></div>
+          <div class="preview-art"><canvas id="cyglobsCanvas" aria-label="CyGlobsGL render output"></canvas><img id="aiImage" alt="Generated CyGlobsGL artwork" hidden></div>
+          <div class="preview-meta"><div><span class="badge" id="previewBadge">LIVE FRAMEBUFFER</span><h3 id="previewTitle">Radiant Cyber-Temple</h3><p id="previewMeta">CyGlobsGL Python • Wireframe • radius 0.62</p><code id="packetHex">30070000009f0000</code></div><button class="icon-btn" id="downloadRender" title="Download image">↓</button></div>
         </div>
       </div>
     </section>
     <section class="section" id="gallery"><div class="section-heading"><div><span class="eyebrow">TRENDING NOW</span><h2>Community creations</h2></div><button class="ghost">View all</button></div><div class="filters"><button class="active">Featured</button><button>Fantasy</button><button>Photography</button><button>Anime</button><button>Abstract</button><button>Architecture</button></div><div class="masonry" id="galleryGrid"></div></section>
-    <section class="section models" id="models"><div class="section-heading"><div><span class="eyebrow">FEATURED REQUIREMENTS</span><h2>Generation stack</h2></div></div><div class="model-grid"><article class="model-card"><span class="model-icon">AI</span><h3>Real Image Provider</h3><p>OpenAI-compatible or generic JSON generation with saved image output.</p><span class="pill">Configurable</span></article><article class="model-card"><span class="model-icon">GL</span><h3>CyGlobs Validation</h3><p>Validated eight-byte transform directives and MVP metadata.</p><span class="pill">Required</span></article><article class="model-card"><span class="model-icon">FB</span><h3>Local Fallback</h3><p>Procedural canvas output remains available when the provider is offline.</p><span class="pill">Always available</span></article></div></section>
+    <section class="section models" id="models"><div class="section-heading"><div><span class="eyebrow">FEATURED REQUIREMENTS</span><h2>Generation stack</h2></div></div><div class="model-grid"><article class="model-card"><span class="model-icon">PY</span><h3>CyGlobsGL Python</h3><p>Local deterministic procedural generation with no external model or API.</p><span class="pill">Required</span></article><article class="model-card"><span class="model-icon">GL</span><h3>CyGlobs Validation</h3><p>Validated eight-byte transform directives and MVP metadata.</p><span class="pill">Native</span></article><article class="model-card"><span class="model-icon">FB</span><h3>Local Framebuffer</h3><p>Browser and server rendering remain available without network access.</p><span class="pill">Always available</span></article></div></section>
   </main>
-  <footer><div class="brand"><span class="brand-mark">D</span><span>Discrete</span></div><p>Real AI generation with CyGlobsGL fallback.</p><span>© 2026 Discrete.ai</span></footer>
+  <footer><div class="brand"><span class="brand-mark">D</span><span>Discrete</span></div><p>Powered only by the CyGlobsGL Python framework.</p><span>© 2026 Discrete.ai</span></footer>
   <div class="toast" id="toast">Render complete</div>
   <script src="cyglobsgl.js"></script><script src="app-ai.js"></script>
 </body>
