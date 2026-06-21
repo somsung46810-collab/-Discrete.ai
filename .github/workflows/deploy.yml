@@ -1,0 +1,263 @@
+name: Native Deployment
+
+on:
+  workflow_run:
+    workflows: ["Python CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment environment
+        required: true
+        type: choice
+        options: [staging, production]
+      ref:
+        description: Branch, tag, or commit to deploy
+        required: true
+        default: main
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: discrete-ai-${{ github.event.inputs.environment || (startsWith(github.ref, 'refs/tags/') && 'production') || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.meta.outputs.release_id }}
+      source_sha: ${{ steps.meta.outputs.source_sha }}
+      target_environment: ${{ steps.meta.outputs.target_environment }}
+    steps:
+      - name: Resolve source
+        id: meta
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            SOURCE_SHA="${{ github.event.workflow_run.head_sha }}"
+            TARGET_ENVIRONMENT="staging"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SOURCE_SHA="${{ github.event.inputs.ref }}"
+            TARGET_ENVIRONMENT="${{ github.event.inputs.environment }}"
+          else
+            SOURCE_SHA="${{ github.sha }}"
+            TARGET_ENVIRONMENT="production"
+          fi
+          RELEASE_ID="$(date -u +%Y%m%d%H%M%S)-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "target_environment=$TARGET_ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.meta.outputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Validate and build
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pip check
+          ruff check ai_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework scripts tests
+          pytest
+          python -m pip install build
+          python -m build
+
+      - name: Create deployment archive
+        shell: bash
+        run: |
+          mkdir -p deployment
+          tar \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=.venv \
+            --exclude='*.db' \
+            --exclude=storage \
+            --exclude=deployment \
+            -czf "deployment/discrete-ai-${{ steps.meta.outputs.release_id }}.tar.gz" .
+          cp dist/* deployment/
+          sha256sum deployment/* > deployment/SHA256SUMS
+
+      - name: Upload build and release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: discrete-ai-${{ steps.meta.outputs.release_id }}
+          path: deployment/
+          if-no-files-found: error
+          retention-days: 30
+
+  deploy-staging:
+    needs: prepare
+    if: needs.prepare.outputs.target_environment == 'staging'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.DEPLOY_PUBLIC_URL }}
+    steps:
+      - name: Check out deployment scripts
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.source_sha }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: discrete-ai-${{ needs.prepare.outputs.release_id }}
+          path: deployment
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${DEPLOY_PORT:-22}" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Create environment file
+        shell: bash
+        env:
+          DISCRETE_SECRET_KEY: ${{ secrets.DISCRETE_SECRET_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          IMAGE_PROVIDER: ${{ vars.DISCRETE_IMAGE_PROVIDER }}
+          IMAGE_MODEL: ${{ vars.DISCRETE_IMAGE_MODEL }}
+          IMAGE_PROVIDER_URL: ${{ secrets.DISCRETE_IMAGE_PROVIDER_URL }}
+          IMAGE_PROVIDER_TOKEN: ${{ secrets.DISCRETE_IMAGE_PROVIDER_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.DISCRETE_STRIPE_SECRET_KEY }}
+        run: |
+          umask 077
+          cat > deployment/runtime.env <<EOF
+          DISCRETE_ENV=staging
+          DISCRETE_SECRET_KEY=$DISCRETE_SECRET_KEY
+          DISCRETE_IMAGE_PROVIDER=${IMAGE_PROVIDER:-openai}
+          DISCRETE_IMAGE_MODEL=${IMAGE_MODEL:-gpt-image-2}
+          DISCRETE_IMAGE_PROVIDER_URL=$IMAGE_PROVIDER_URL
+          DISCRETE_IMAGE_PROVIDER_TOKEN=$IMAGE_PROVIDER_TOKEN
+          OPENAI_API_KEY=$OPENAI_API_KEY
+          DISCRETE_STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
+          EOF
+
+      - name: Deploy staging release
+        shell: bash
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          ROOT: ${{ vars.DEPLOY_ROOT }}
+          APP_PORT: ${{ vars.DISCRETE_PORT }}
+        run: |
+          PORT="${SSH_PORT:-22}"
+          ARCHIVE="deployment/discrete-ai-${{ needs.prepare.outputs.release_id }}.tar.gz"
+          ssh -p "$PORT" "$USER@$HOST" "mkdir -p '${ROOT}/incoming' '${ROOT}/shared'"
+          scp -P "$PORT" "$ARCHIVE" "$USER@$HOST:${ROOT}/incoming/"
+          scp -P "$PORT" deployment/runtime.env "$USER@$HOST:${ROOT}/shared/.env"
+          scp -P "$PORT" scripts/deploy_remote.sh "$USER@$HOST:${ROOT}/incoming/deploy_remote.sh"
+          ssh -p "$PORT" "$USER@$HOST" "chmod 600 '${ROOT}/shared/.env' && bash '${ROOT}/incoming/deploy_remote.sh' staging '${ROOT}/incoming/$(basename "$ARCHIVE")' '${ROOT}' '${{ needs.prepare.outputs.release_id }}' '${APP_PORT:-8001}'"
+
+  deploy-production:
+    needs: prepare
+    if: needs.prepare.outputs.target_environment == 'production'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_PUBLIC_URL }}
+    steps:
+      - name: Check out deployment scripts
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.source_sha }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: discrete-ai-${{ needs.prepare.outputs.release_id }}
+          path: deployment
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${DEPLOY_PORT:-22}" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Create environment file
+        shell: bash
+        env:
+          DISCRETE_SECRET_KEY: ${{ secrets.DISCRETE_SECRET_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          IMAGE_PROVIDER: ${{ vars.DISCRETE_IMAGE_PROVIDER }}
+          IMAGE_MODEL: ${{ vars.DISCRETE_IMAGE_MODEL }}
+          IMAGE_PROVIDER_URL: ${{ secrets.DISCRETE_IMAGE_PROVIDER_URL }}
+          IMAGE_PROVIDER_TOKEN: ${{ secrets.DISCRETE_IMAGE_PROVIDER_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.DISCRETE_STRIPE_SECRET_KEY }}
+        run: |
+          umask 077
+          cat > deployment/runtime.env <<EOF
+          DISCRETE_ENV=production
+          DISCRETE_SECRET_KEY=$DISCRETE_SECRET_KEY
+          DISCRETE_IMAGE_PROVIDER=${IMAGE_PROVIDER:-openai}
+          DISCRETE_IMAGE_MODEL=${IMAGE_MODEL:-gpt-image-2}
+          DISCRETE_IMAGE_PROVIDER_URL=$IMAGE_PROVIDER_URL
+          DISCRETE_IMAGE_PROVIDER_TOKEN=$IMAGE_PROVIDER_TOKEN
+          OPENAI_API_KEY=$OPENAI_API_KEY
+          DISCRETE_STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY
+          EOF
+
+      - name: Deploy production release
+        shell: bash
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          ROOT: ${{ vars.DEPLOY_ROOT }}
+          APP_PORT: ${{ vars.DISCRETE_PORT }}
+        run: |
+          PORT="${SSH_PORT:-22}"
+          ARCHIVE="deployment/discrete-ai-${{ needs.prepare.outputs.release_id }}.tar.gz"
+          ssh -p "$PORT" "$USER@$HOST" "mkdir -p '${ROOT}/incoming' '${ROOT}/shared'"
+          scp -P "$PORT" "$ARCHIVE" "$USER@$HOST:${ROOT}/incoming/"
+          scp -P "$PORT" deployment/runtime.env "$USER@$HOST:${ROOT}/shared/.env"
+          scp -P "$PORT" scripts/deploy_remote.sh "$USER@$HOST:${ROOT}/incoming/deploy_remote.sh"
+          ssh -p "$PORT" "$USER@$HOST" "chmod 600 '${ROOT}/shared/.env' && bash '${ROOT}/incoming/deploy_remote.sh' production '${ROOT}/incoming/$(basename "$ARCHIVE")' '${ROOT}' '${{ needs.prepare.outputs.release_id }}' '${APP_PORT:-8000}'"
+
+  publish-release:
+    needs: [prepare, deploy-production]
+    if: startsWith(github.ref, 'refs/tags/v') && needs.deploy-production.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: discrete-ai-${{ needs.prepare.outputs.release_id }}
+          path: deployment
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" deployment/* --generate-notes --verify-tag
