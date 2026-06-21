@@ -1,29 +1,24 @@
 # Discrete.ai
 
-Discrete Art Studio runs on the embedded CyGlobs Python framework and CyGlobsGL.
+Discrete Art Studio runs on the embedded CyGlobs Python framework and CyGlobsGL, with real image generation through a configured provider.
 
 ## Architecture
 
-- `cyglobs_app.py` provides the HTTP and JSON runtime using Python's standard library.
-- `cyglobs_framework/` provides protocol envelopes, comparison, operation routing, configuration, retry, and fallback behavior.
-- `graphics_runtime.py` provides CyGlobsGL directive packets and the default radius constraint.
-- `cyglobsgl.js` provides the live browser Model-View-Projection renderer and canvas framebuffer.
-- `sqlite3`, `hashlib`, `hmac`, `urllib`, and `http.server` provide persistence, authentication, provider access, payments, and static serving.
+- `cyglobs_app.py` provides the standard-library HTTP and JSON runtime.
+- `cyglobs_framework/` provides protocol envelopes, comparison, operation routing, retry, and fallback behavior.
+- `graphics_runtime.py` and `cyglobsgl.js` provide directive packets, MVP rendering, and local framebuffer fallback.
+- `ai_generation.py` provides real image-provider requests, response normalization, image persistence, and feature reporting.
+- `vendor/` contains the replicated upstream framework and CyGlobsGL source snapshots.
 
 The application does not use Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container tooling.
 
-## Upstream source snapshots
+## Configure real generation
 
-- `vendor/cyglobs_python_framework/` stores the required framework source snapshot.
-- `vendor/cyglobsgl_upstream/` stores the required CyGlobsGL source snapshot.
-- `tests/test_vendor_sync.py` checks packet compatibility between CyGlobsGL and the active runtime.
-- `THIRD_PARTY_NOTICES.md` records source provenance and license information.
+Set either an `openai` or `generic` provider in the environment. The full configuration, accepted response shapes, generation controls, and endpoints are documented in `FEATURE_REQUIREMENTS.md`.
 
-The active integrated code remains in `cyglobs_framework/`, `graphics_runtime.py`, `cyglobs_app.py`, and `cyglobsgl.js`.
+The browser calls the CyGlobs RPC `generate_image` operation. Base64 provider output is saved under `storage/`; remote image URLs are displayed directly. Provider failures automatically retain the CyGlobsGL canvas result.
 
 ## Install
-
-Python 3.11 or 3.12 is recommended.
 
 ```bash
 python -m venv .venv
@@ -35,7 +30,6 @@ Windows:
 .venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install -e ".[dev]"
-python -m pip check
 ```
 
 macOS or Linux:
@@ -44,12 +38,7 @@ macOS or Linux:
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -e '.[dev]'
-python -m pip check
 ```
-
-## Configuration
-
-`.env.example` documents the supported variable names. Export the variables you need before starting the server. The defaults use a local SQLite file and `storage/` directory, so no configuration is required for local use.
 
 ## Run
 
@@ -57,30 +46,22 @@ python -m pip check
 python -m cyglobs_app
 ```
 
-Or use the installed command:
-
-```bash
-discrete-art-studio
-```
-
 Open `http://127.0.0.1:8000`.
 
 ## Validate
 
 ```bash
-ruff check cyglobs_app.py graphics_runtime.py cyglobs_framework tests
-pytest --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
+ruff check ai_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework tests
+pytest --cov=ai_generation --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
 python -m build
 ```
 
-## Runtime capabilities
+## Capabilities
 
-- Static website serving
-- CyGlobs RPC at `/rpc`
+- Real AI image generation
+- PNG, WebP, and JPEG output
+- Square, landscape, and portrait sizes
+- CyGlobs directive validation
+- Automatic CyGlobsGL fallback
 - SQLite users, creations, likes, and credits
-- PBKDF2 password hashing
-- HMAC-signed expiring access tokens
-- Base64 image uploads with type and size restrictions
-- External image-provider requests through `urllib`
-- Optional Stripe Checkout through direct HTTPS requests
-- Local CyGlobsGL rendering when external generation is unavailable
+- Local uploads and generated-image downloads
