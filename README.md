@@ -6,29 +6,36 @@ Discrete.ai is a safe, repository-relative source analysis pipeline. It reads a 
 
 ## Art Studio website
 
-This repository now also includes an original AI-art creation and discovery interface inspired by the broad workflow of modern generative-art platforms, without copying OpenArt branding or proprietary assets.
+This repository also includes an original procedural-art creation and discovery interface inspired by the broad workflow of modern generative-art platforms, without copying OpenArt branding or proprietary assets.
 
 ### Website stack
 
 - **Discrete.ai**: product shell, discovery gallery, and creator workflow
-- **CyGlobsGL**: intended real-time preview/render integration
-- **CyGlobs Python Framework**: intended backend orchestration and generation API
-- Vanilla HTML, CSS, and JavaScript for the zero-build frontend
-- Flask API scaffold
+- **CyGlobsGL browser renderer**: local MVP transforms, procedural wireframes, triangle fills, contingency rendering, directive packets, and canvas framebuffer output
+- Vanilla HTML, CSS, and JavaScript
+- No Flask API, server-side generation endpoint, or Python web dependency
+
+The browser renderer is a JavaScript adaptation of CyGlobsGL concepts. The upstream CyGlobsGL project remains a pure-Python educational software renderer and is not presented as an OpenGL-conformant or GPU-driver-compatible implementation.
 
 ### Run the website
 
+Open `index.html` directly, or serve the directory with any static server:
+
 ```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python app.py
+python -m http.server 5500
 ```
 
-Open `http://localhost:8000`.
+Then open `http://localhost:5500`.
 
-Replace `CyGlobsAdapter.generate()` in `app.py` with the concrete CyGlobs-Python-Framework job runner and connect CyGlobsGL in `app.js` for interactive shader and 3D previews.
+### Art Studio features
+
+- Browser-local animated Model–View–Projection rendering
+- Prompt-seeded deterministic palettes
+- Wireframe, filled-triangle, and contingency modes
+- Eight-byte hexadecimal directive packets
+- Radius constraint of `0.62`
+- PNG framebuffer download
+- No API calls or backend process
 
 ## Install the source-analysis package
 
@@ -56,14 +63,15 @@ python -m build
 ## Package contents
 
 - `discrete_ai.py` — runtime implementation
-- `tests/test_discrete_ai.py` — automated test suite
+- `tests/test_discrete_ai.py` — automated tests
 - `pyproject.toml` — package and development configuration
-- `.github/workflows/python-ci.yml` — lint, test, and build workflow
+- `.github/workflows/python-ci.yml` — lint, test, and build automation
 - `.github/workflows/project-progress.yml` — weighted completion report
 - `SPEC.md` — technical specification
 - `STATUS.md` — milestone state
-- `index.html`, `styles.css`, `app.js` — Art Studio frontend
-- `app.py` — Flask API and CyGlobs adapter scaffold
+- `index.html`, `styles.css`, `cyglobsgl.css` — Art Studio interface
+- `app.js` — studio controls and gallery behavior
+- `cyglobsgl.js` — browser-native CyGlobsGL MVP and framebuffer renderer
 
 ## Safety model
 
@@ -71,3 +79,4 @@ python -m build
 - No shell invocation
 - No arbitrary expression evaluation
 - Explicit commit manifest rather than automatic repository mutation
+- Browser renderer operates locally without uploading prompts or images
