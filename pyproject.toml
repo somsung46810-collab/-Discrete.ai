@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discrete-ai"
-version = "0.1.0"
-description = "A safe CommitCompile(Clone, File) pipeline for repository-relative source analysis"
+version = "0.2.0"
+description = "Discrete Art Studio with CyGlobs framework, rendering, authentication, storage, and deployment support"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -15,20 +15,43 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
 ]
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "uvicorn[standard]>=0.34,<1.0",
+  "pydantic>=2.10,<3.0",
+  "pydantic-settings>=2.7,<3.0",
+  "sqlalchemy>=2.0,<3.0",
+  "PyJWT>=2.10,<3.0",
+  "pwdlib[argon2]>=0.2,<1.0",
+  "python-multipart>=0.0.20,<1.0",
+  "aiofiles>=24.1,<25.0",
+  "httpx>=0.28,<1.0",
+  "Pillow>=11.0,<12.0",
+  "stripe>=11.0,<13.0",
+]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
-  "ruff>=0.6",
+  "pytest-asyncio>=0.25",
+  "pytest-cov>=6.0",
+  "ruff>=0.9",
+  "mypy>=1.14",
 ]
 
 [tool.setuptools]
-py-modules = ["discrete_ai"]
+py-modules = ["discrete_ai", "graphics_runtime", "discrete_server"]
+packages = ["cyglobs_framework"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q --disable-warnings --maxfail=1"
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+warn_unused_ignores = true
+check_untyped_defs = true
