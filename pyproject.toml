@@ -20,6 +20,7 @@ dependencies = [
   "uvicorn[standard]>=0.34,<1.0",
   "pydantic>=2.10,<3.0",
   "pydantic-settings>=2.7,<3.0",
+  "email-validator>=2.2,<3.0",
   "sqlalchemy>=2.0,<3.0",
   "PyJWT>=2.10,<3.0",
   "pwdlib[argon2]>=0.2,<1.0",
@@ -40,7 +41,7 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = ["discrete_ai", "graphics_runtime", "discrete_server"]
+py-modules = ["discrete_ai", "graphics_runtime", "discrete_server", "studio_api"]
 packages = ["cyglobs_framework"]
 
 [tool.pytest.ini_options]
