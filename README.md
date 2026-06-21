@@ -24,7 +24,6 @@ Windows:
 
 ```powershell
 .venv\Scripts\activate
-copy .env.example .env
 python -m pip install --upgrade pip
 pip install -e ".[dev]"
 python -m pip check
@@ -34,11 +33,14 @@ macOS or Linux:
 
 ```bash
 source .venv/bin/activate
-cp .env.example .env
 python -m pip install --upgrade pip
 pip install -e '.[dev]'
 python -m pip check
 ```
+
+## Configuration
+
+`.env.example` documents the supported variable names. Export the variables you need before starting the server. The defaults use a local SQLite file and `storage/` directory, so no configuration is required for local use.
 
 ## Run
 
