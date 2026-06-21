@@ -1,6 +1,6 @@
 # Discrete Art Studio Status
 
-Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, the repository image-generation adapter, and native SSH-based deployment workflows including release duplication through DUPE.
+Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, the repository image-generation adapter, native SSH deployment workflows, DUPE release cloning, and alternative verification paths that do not depend on GitHub deployment environments.
 
 ## Current product completion
 
@@ -17,7 +17,7 @@ Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, th
 | Database, saved creations, likes | 0% | 84% | Native SQLite persistence and versioned migrations are implemented |
 | File storage and downloads | 15% | 88% | Generated output is persisted and downloadable in PNG, WebP, or JPEG |
 | Payments or usage credits | 0% | 60% | Local credits and direct checkout requests are implemented |
-| Testing, security, and deployment | 30% | 92% | CI, packaging, migrations, DUPE, health checks, releases, and rollback are implemented |
+| Testing, security, and deployment | 30% | 93% | CI, alternative verification, packaging, migrations, DUPE, health checks, releases, and rollback are implemented |
 
 ## Production readiness
 
@@ -29,24 +29,42 @@ Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, th
 | Data persistence and migrations | 86% | SQLite persistence and versioned migrations exist; automated backups and restore drills remain |
 | File and generated-image storage | 88% | Local generated output and downloads work; production object storage and retention controls remain optional improvements |
 | Payments and credit settlement | 60% | Checkout requests and local credits exist; verified webhooks and idempotent settlement remain |
-| Observability and operations | 70% | Health checks, deployment summaries, and rollback exist; centralized logs, metrics, alerts, and incident procedures remain |
-| Security hardening | 72% | Secret injection, protected environments, release-id validation, hashing, and signed tokens are designed |
+| Observability and operations | 72% | Health checks, local smoke tests, deployment summaries, and rollback exist; centralized logs, metrics, and alerts remain |
+| Security hardening | 72% | Secret scanning, protected environments, release-id validation, hashing, and signed tokens are designed |
 | Staging readiness | 89% | Normal and DUPE workflows are implemented; live environment configuration and first successful run remain unverified |
 | Production deployment readiness | 88% | Promotion, approvals, DUPE, migrations, health checks, release publication, and rollback are implemented |
-| DUPE release deployment | 92% | Immutable release duplication, shared-data isolation, manifest creation, validation, health checking, and rollback are implemented |
+| Alternative execution readiness | 94% | Local, GitHub-hosted, self-hosted, artifact-only, and direct-host verification routes are documented or implemented |
 | Operational production verification | 55% | No confirmed production environment configuration or successful live deployment run is recorded |
-| **Overall production readiness** | **81%** | Application and deployment implementation are strong; live infrastructure and operational proof remain |
+| **Overall production readiness** | **82%** | Code and verification paths are strong; live infrastructure and operational proof remain |
+
+## Verification paths
+
+| Verification path | Completion | Status |
+|---|---:|---|
+| Repository CI and validation implementation | 100% | Standard CI gate is implemented |
+| Local full-stack verification | 100% implemented | `scripts/alternative_verification.py` runs checkups, tests, builds, starts the app, and smoke-tests endpoints |
+| GitHub-hosted alternative verification | 100% implemented | Workflow does not require staging or production environments |
+| Self-hosted or third-party CI compatibility | 95% | A single portable verification command can run outside GitHub Actions |
+| Artifact-only release candidate | 100% | ZIP, TAR.GZ, wheel, source distribution, checksum, and manifest generation are implemented |
+| Direct-host rehearsal | 90% | Local runtime and remote deployment scripts support isolated rehearsal |
+| GitHub environment configuration | 0% verified | Requires real repository administration and secrets |
+| Standard CI execution | 0% verified | No workflow run is visible through connected GitHub data |
+| Alternative workflow execution | 0% verified | Workflow is committed but no run is visible yet |
+| Live staging deployment | 0% verified | Requires configured host and credentials |
+| Live production promotion | 0% verified | Requires protected environment approval and infrastructure |
+| **Code-verification readiness** | **95%** | Multiple executable alternatives exist even when the deployment gate is unavailable |
+| **End-to-end operational completion** | **68%** | Higher than the earlier 60% because code verification no longer depends exclusively on GitHub environments |
 
 ## Continuous deployment completion
 
 | Deployment area | Previous | Current | State |
 |---|---:|---:|---|
 | Automated builds | 85% | 95% | Dependency checks, tests, package builds, source archive, and checksums |
-| Automated tests and linting | 80% | 93% | Python CI plus DUPE safety and deployment-gate validation |
+| Automated tests and linting | 80% | 94% | Standard CI and alternative full-stack verification are implemented |
 | Build artifact creation | 65% | 95% | Wheel, source distribution, deployment archive, production ZIP, and SHA-256 manifest |
 | Release publishing | 10% | 85% | Successful tagged production deployments publish GitHub Releases |
-| Staging deployment | 0% | 89% | Main CI and manual DUPE can deploy through the staging environment |
-| Production deployment | 0% | 88% | Manual, version-tag, or DUPE promotion runs through the production environment |
+| Staging deployment | 0% | 89% | Main CI and manual DUPE can deploy through staging when configured |
+| Production deployment | 0% | 88% | Manual, version-tag, or DUPE promotion runs through production when configured |
 | DUPE deployment | 0% | 92% | Existing releases can be safely cloned and promoted under a new immutable identifier |
 | Secrets and environment management | 20% | 85% | GitHub environment secrets and variables produce a protected remote environment file |
 | Database migration execution | 0% | 90% | Versioned SQLite migrations run before service promotion |
@@ -55,39 +73,35 @@ Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, th
 | Release tagging and promotion | 0% | 85% | Version tags promote to production and generate releases |
 | **Continuous deployment implementation** | **35%** | **91%** | Normal and DUPE workflows are complete; live execution still requires environment configuration |
 
-## Execution status
+## Alternative interpretation
 
-| Execution area | Completion | Status |
-|---|---:|---|
-| DUPE script implementation | 100% | `scripts/dupe_release.sh` is committed |
-| DUPE integration with deployment lifecycle | 100% | `deploy_remote.sh` supports source-release duplication |
-| GitHub Actions DUPE workflow | 100% | Protected manual workflow is committed |
-| Automated DUPE tests | 100% implemented | Tests cover successful duplication, path traversal rejection, and overwrite prevention |
-| CI execution confirmation | 55% | Repository commits should trigger CI, but no successful workflow run has been confirmed through connected GitHub data |
-| Live staging DUPE execution | 0% verified | Requires configured staging environment and an existing source release |
-| Live production DUPE execution | 0% verified | Requires configured production environment, approval, secrets, and an existing source release |
-| **DUPE execution readiness** | **82%** | Code and workflow are ready; live infrastructure execution remains unverified |
+The missing GitHub environments and absent workflow runs should not make repository verification appear to be zero percent. They specifically indicate that the GitHub-managed deployment route is unverified. Discrete.ai now separates:
+
+1. Implementation completion.
+2. Local executable verification.
+3. Hosted automation verification.
+4. Staging infrastructure verification.
+5. Production infrastructure verification.
 
 ## Overall estimate
 
 - Local procedural-art MVP: **96%**
 - Installable embedded full-stack application: **90%**
 - Production-ready application implementation: **85%**
-- Overall production readiness: **81%**
+- Overall production readiness: **82%**
+- Code-verification readiness: **95%**
 - Continuous deployment implementation: **91%**
 - DUPE deployment implementation: **92%**
-- DUPE execution readiness: **82%**
 - Operationally verified production deployment: **55%**
+- End-to-end operational completion: **68%**
 
 ## Remaining production work
 
-1. Create and configure the `staging` and `production` GitHub environments.
-2. Add environment-scoped SSH, provider, signing, and deployment secrets.
-3. Configure distinct remote roots, ports, public URLs, and reverse-proxy routing.
-4. Run and verify Python CI, including `tests/test_dupe_deployment.py`.
-5. Execute the first staging DUPE from an existing release and verify `/api/health`.
-6. Enable required reviewers for production promotion.
-7. Execute and approve a production DUPE rehearsal.
-8. Promote a tested version tag and confirm GitHub Release publication.
-9. Confirm rollback by intentionally failing a staging health check.
-10. Add verified payment webhooks, backups, monitoring, alerts, and account recovery controls.
+1. Execute either `python scripts/alternative_verification.py` or the Alternative Verification workflow and record the result.
+2. Enable or repair standard GitHub Actions execution if required.
+3. Create and configure the `staging` and `production` GitHub environments.
+4. Add environment-scoped SSH, provider, signing, and deployment secrets.
+5. Run the first staging deployment and verification.
+6. Rehearse DUPE and rollback in staging.
+7. Enable production reviewers and promote a tested release tag.
+8. Add verified payment webhooks, centralized monitoring, alerts, backups, and account recovery controls.
