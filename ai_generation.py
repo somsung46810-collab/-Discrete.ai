@@ -1,19 +1,21 @@
 """Real image generation adapters for Discrete Art Studio.
 
-The module uses Python's standard library only. It supports the OpenAI Image API
-and generic JSON image providers, then stores returned image bytes in the local
-Discrete.ai storage directory.
+The Image API path posts JSON to `/v1/images/generations`, decodes the first
+`data[0].b64_json` result, saves it locally, and wraps the saved asset with
+CyGlobsGL runtime metadata.
 """
 from __future__ import annotations
 
 import base64
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import json
 import os
 from pathlib import Path
 from typing import Any
 from urllib import error, request
 from uuid import uuid4
+
+from graphics_runtime import generated_image_asset
 
 
 OPENAI_IMAGE_ENDPOINT = "https://api.openai.com/v1/images/generations"
@@ -79,6 +81,7 @@ class GenerationResult:
     height: int
     output_format: str
     revised_prompt: str = ""
+    cyglobsgl: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -153,7 +156,7 @@ def generate_image(payload: dict[str, Any], storage: Path) -> GenerationResult:
             raise RuntimeError("OPENAI_API_KEY is required for the OpenAI image provider")
         model = os.getenv("DISCRETE_IMAGE_MODEL", "gpt-image-2")
         response = _post_json(
-            os.getenv("DISCRETE_IMAGE_PROVIDER_URL", OPENAI_IMAGE_ENDPOINT),
+            os.getenv("DISCRETE_IMAGE_PROVIDER_URL", "") or OPENAI_IMAGE_ENDPOINT,
             openai_key,
             {
                 "model": model,
@@ -190,6 +193,15 @@ def generate_image(payload: dict[str, Any], storage: Path) -> GenerationResult:
         image_url = _save_image(storage, content, spec.output_format)
 
     width, height = _dimensions(spec.size)
+    cyglobsgl = generated_image_asset(
+        image_url=image_url,
+        provider=provider,
+        model=model,
+        width=width,
+        height=height,
+        output_format=spec.output_format,
+        image_bytes=content,
+    ).to_dict()
     return GenerationResult(
         image_url=image_url,
         provider=provider,
@@ -198,6 +210,7 @@ def generate_image(payload: dict[str, Any], storage: Path) -> GenerationResult:
         height=height,
         output_format=spec.output_format,
         revised_prompt=revised_prompt,
+        cyglobsgl=cyglobsgl,
     )
 
 
@@ -211,7 +224,10 @@ def provider_features() -> dict[str, Any]:
     return {
         "real_ai_generation": configured,
         "provider": provider or ("openai" if os.getenv("OPENAI_API_KEY") else "generic" if os.getenv("DISCRETE_IMAGE_PROVIDER_URL") else "none"),
+        "endpoint": OPENAI_IMAGE_ENDPOINT if provider == "openai" else os.getenv("DISCRETE_IMAGE_PROVIDER_URL", ""),
+        "response_field": "data[0].b64_json" if provider == "openai" else "provider-defined",
         "supported_aspects": ["1:1", "16:9", "9:16"],
         "supported_formats": sorted(SUPPORTED_FORMATS),
+        "cyglobsgl_runtime": True,
         "cyglobsgl_fallback": True,
     }
