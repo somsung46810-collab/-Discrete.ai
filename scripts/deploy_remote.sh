@@ -2,10 +2,11 @@
 set -Eeuo pipefail
 
 ENVIRONMENT="${1:?environment is required}"
-ARCHIVE="${2:?archive path is required}"
+ARCHIVE="${2:?archive path or dash is required}"
 DEPLOY_ROOT="${3:?deploy root is required}"
 RELEASE_ID="${4:?release id is required}"
 PORT="${5:?service port is required}"
+SOURCE_RELEASE_ID="${6:-}"
 
 RELEASES_DIR="$DEPLOY_ROOT/releases"
 SHARED_DIR="$DEPLOY_ROOT/shared"
@@ -15,17 +16,22 @@ PREVIOUS_LINK="$DEPLOY_ROOT/previous"
 SERVICE_NAME="discrete-ai-$ENVIRONMENT.service"
 SYSTEMD_DIR="$HOME/.config/systemd/user"
 HEALTH_URL="http://127.0.0.1:$PORT/api/health"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 mkdir -p "$RELEASES_DIR" "$SHARED_DIR/storage" "$SYSTEMD_DIR"
-rm -rf "$RELEASE_DIR"
-mkdir -p "$RELEASE_DIR"
-tar -xzf "$ARCHIVE" -C "$RELEASE_DIR"
+
+if [[ -n "$SOURCE_RELEASE_ID" ]]; then
+  bash "$SCRIPT_DIR/dupe_release.sh" "$DEPLOY_ROOT" "$SOURCE_RELEASE_ID" "$RELEASE_ID"
+else
+  rm -rf "$RELEASE_DIR"
+  mkdir -p "$RELEASE_DIR"
+  tar -xzf "$ARCHIVE" -C "$RELEASE_DIR"
+  ln -sfn "$SHARED_DIR/storage" "$RELEASE_DIR/storage"
+fi
 
 if [[ -L "$CURRENT_LINK" ]]; then
   ln -sfn "$(readlink -f "$CURRENT_LINK")" "$PREVIOUS_LINK"
 fi
-
-ln -sfn "$SHARED_DIR/storage" "$RELEASE_DIR/storage"
 
 if [[ ! -f "$SHARED_DIR/.env" ]]; then
   echo "Missing $SHARED_DIR/.env" >&2
@@ -40,7 +46,9 @@ export DISCRETE_PORT="$PORT"
 export DISCRETE_STORAGE_DIR="$SHARED_DIR/storage"
 export DISCRETE_DATABASE_PATH="${DISCRETE_DATABASE_PATH:-$SHARED_DIR/discrete_art_studio.db}"
 
-python3 -m venv "$RELEASE_DIR/.venv"
+if [[ ! -x "$RELEASE_DIR/.venv/bin/python" ]]; then
+  python3 -m venv "$RELEASE_DIR/.venv"
+fi
 "$RELEASE_DIR/.venv/bin/python" -m pip install --upgrade pip
 "$RELEASE_DIR/.venv/bin/python" -m pip install "$RELEASE_DIR"
 "$RELEASE_DIR/.venv/bin/python" "$RELEASE_DIR/scripts/migrate.py"
@@ -97,4 +105,8 @@ find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' \
   | cut -d' ' -f2- \
   | xargs -r rm -rf
 
-echo "Deployment complete: $ENVIRONMENT $RELEASE_ID"
+if [[ -n "$SOURCE_RELEASE_ID" ]]; then
+  echo "DUPE deployment complete: $ENVIRONMENT $SOURCE_RELEASE_ID -> $RELEASE_ID"
+else
+  echo "Deployment complete: $ENVIRONMENT $RELEASE_ID"
+fi
