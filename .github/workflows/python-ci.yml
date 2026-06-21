@@ -11,8 +11,23 @@ permissions:
   contents: read
 
 jobs:
+  repository-checkup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run all-file Discrete.ai checkup
+        run: python scripts/check_all.py
+
   test:
     runs-on: ubuntu-latest
+    needs: repository-checkup
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
