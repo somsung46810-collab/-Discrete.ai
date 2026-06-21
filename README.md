@@ -1,22 +1,39 @@
 # Discrete.ai
 
-Discrete Art Studio runs on the embedded CyGlobs Python framework and CyGlobsGL, with real image generation through a configured provider.
+Discrete Art Studio runs entirely on the embedded CyGlobsGL Python framework. Artwork generation is local, deterministic, and does not require an external image provider or model API.
 
 ## Architecture
 
 - `cyglobs_app.py` provides the standard-library HTTP and JSON runtime.
-- `cyglobs_framework/` provides protocol envelopes, comparison, operation routing, retry, and fallback behavior.
-- `graphics_runtime.py` and `cyglobsgl.js` provide directive packets, MVP rendering, and local framebuffer fallback.
-- `ai_generation.py` provides real image-provider requests, response normalization, image persistence, and feature reporting.
-- `vendor/` contains the replicated upstream framework and CyGlobsGL source snapshots.
+- `cyglobs_framework/` provides protocol envelopes, comparison, operation routing, retry, and contingency behavior.
+- `cyglobsgl_generation.py` creates deterministic procedural SVG artwork locally.
+- `graphics_runtime.py` and `cyglobsgl.js` provide directive packets, MVP rendering, metadata, and browser framebuffer rendering.
+- `ai_generation.py` is a compatibility export only; it contains no external provider implementation.
+- `vendor/` contains replicated CyGlobs framework and CyGlobsGL source snapshots.
 
-The application does not use Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container tooling.
+The application does not use an external image API, Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container tooling.
 
-## Configure real generation
+## Local generation
 
-Set either an `openai` or `generic` provider in the environment. The full configuration, accepted response shapes, generation controls, and endpoints are documented in `FEATURE_REQUIREMENTS.md`.
+The browser calls the CyGlobs RPC `generate_image` operation. The Python runtime derives a deterministic seed from the prompt, style, mode, aspect ratio, and complexity setting, then writes a local SVG under `storage/`.
 
-The browser calls the CyGlobs RPC `generate_image` operation. Base64 provider output is saved under `storage/`; remote image URLs are displayed directly. Provider failures automatically retain the CyGlobsGL canvas result.
+Supported modes:
+
+- Wireframe
+- Triangles
+- Contingency
+
+Supported aspects:
+
+- 1:1
+- 16:9
+- 9:16
+
+Output format:
+
+- SVG
+
+No provider credential or outbound network request is required.
 
 ## Install
 
@@ -51,26 +68,26 @@ Open `http://127.0.0.1:8000`.
 ## Validate
 
 ```bash
-ruff check ai_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework scripts tests
-pytest --cov=ai_generation --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
+python scripts/check_all.py
+ruff check ai_generation.py cyglobsgl_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework scripts tests
+pytest --cov=cyglobsgl_generation --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
 python -m build
 ```
 
 ## Continuous deployment
 
-`.github/workflows/deploy.yml` provides native staging and production deployment over SSH. It builds release artifacts, injects GitHub environment secrets, runs versioned SQLite migrations, restarts `cyglobs_app` through user-level systemd, checks `/api/health`, and automatically restores the previous release when the health check fails.
+`.github/workflows/deploy.yml` provides native staging and production deployment over SSH. It builds release artifacts, injects only application and optional payment secrets, runs versioned SQLite migrations, restarts `cyglobs_app`, checks `/api/health`, and restores the previous release when a health check fails.
 
-Successful pushes to `main` deploy to the protected `staging` environment after Python CI passes. Production is promoted manually or by pushing a version tag such as `v0.4.1`. Successful tagged production deployments publish a GitHub Release.
-
-See `DEPLOYMENT.md` for required GitHub secrets, environment variables, approval gates, remote-host prerequisites, release layout, and rollback procedures.
+Successful pushes to `main` can deploy to staging after CI. Production is promoted manually or with a version tag. No external image-provider secrets are needed.
 
 ## Capabilities
 
-- Real AI image generation
-- PNG, WebP, and JPEG output
-- Square, landscape, and portrait sizes
-- CyGlobs directive validation
-- Automatic CyGlobsGL fallback
+- Local CyGlobsGL Python artwork generation
+- Deterministic SVG output
+- Square, landscape, and portrait compositions
+- Wireframe, triangle, and contingency rendering modes
+- CyGlobs directive validation and metadata
+- Browser framebuffer rendering
 - SQLite users, creations, likes, and credits
 - Local uploads and generated-image downloads
-- Native CI/CD with staging, production, migrations, health checks, release publishing, and rollback
+- Native CI/CD with staging, production, migrations, health checks, releases, DUPE, and rollback
