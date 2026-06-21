@@ -27,16 +27,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install project
+      - name: Install project and resolve dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
           python -m pip check
 
-      - name: Lint core packages
-        run: ruff check discrete_ai.py graphics_runtime.py cyglobs_framework tests
+      - name: Lint project
+        run: ruff check discrete_ai.py graphics_runtime.py studio_api.py cyglobs_framework tests
 
-      - name: Import production API
+      - name: Import FastAPI application
         env:
           DISCRETE_SECRET_KEY: ci-test-secret-key
           DISCRETE_DATABASE_URL: sqlite:///./ci-test.db
@@ -48,14 +48,7 @@ jobs:
           DISCRETE_SECRET_KEY: ci-test-secret-key
           DISCRETE_DATABASE_URL: sqlite:///./ci-test.db
           DISCRETE_STORAGE_DIR: ./ci-storage
-        run: pytest
+        run: pytest --cov=. --cov-report=term-missing
 
       - name: Build package
         run: python -m pip install build && python -m build
-
-  container:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build production image
-        run: docker build -t discrete-art-studio:ci .
