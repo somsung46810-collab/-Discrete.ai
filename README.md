@@ -1,82 +1,75 @@
 # Discrete.ai
 
-`Commit -> Compile(Clone, File) { R.E.P.L. }`
+Discrete Art Studio runs on the embedded CyGlobs Python framework and CyGlobsGL.
 
-Discrete.ai is a safe, repository-relative source analysis pipeline. It reads a selected file, validates Python syntax, calculates a SHA-256 digest, renders each byte as hexadecimal plus high/low bit fields, and produces a reviewed commit manifest.
+## Architecture
 
-## Art Studio website
+- `cyglobs_app.py` provides the HTTP and JSON runtime using Python's standard library.
+- `cyglobs_framework/` provides protocol envelopes, comparison, operation routing, configuration, retry, and fallback behavior.
+- `graphics_runtime.py` provides CyGlobsGL directive packets and the default radius constraint.
+- `cyglobsgl.js` provides the live browser Model-View-Projection renderer and canvas framebuffer.
+- `sqlite3`, `hashlib`, `hmac`, `urllib`, and `http.server` provide persistence, authentication, provider access, payments, and static serving.
 
-This repository also includes an original procedural-art creation and discovery interface inspired by the broad workflow of modern generative-art platforms, without copying OpenArt branding or proprietary assets.
+The application does not use Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container tooling.
 
-### Website stack
+## Install
 
-- **Discrete.ai**: product shell, discovery gallery, and creator workflow
-- **CyGlobsGL browser renderer**: local MVP transforms, procedural wireframes, triangle fills, contingency rendering, directive packets, and canvas framebuffer output
-- Vanilla HTML, CSS, and JavaScript
-- No Flask API, server-side generation endpoint, or Python web dependency
-
-The browser renderer is a JavaScript adaptation of CyGlobsGL concepts. The upstream CyGlobsGL project remains a pure-Python educational software renderer and is not presented as an OpenGL-conformant or GPU-driver-compatible implementation.
-
-### Run the website
-
-Open `index.html` directly, or serve the directory with any static server:
+Python 3.11 or 3.12 is recommended.
 
 ```bash
-python -m http.server 5500
+python -m venv .venv
 ```
 
-Then open `http://localhost:5500`.
+Windows:
 
-### Art Studio features
+```powershell
+.venv\Scripts\activate
+copy .env.example .env
+python -m pip install --upgrade pip
+pip install -e ".[dev]"
+python -m pip check
+```
 
-- Browser-local animated Model–View–Projection rendering
-- Prompt-seeded deterministic palettes
-- Wireframe, filled-triangle, and contingency modes
-- Eight-byte hexadecimal directive packets
-- Radius constraint of `0.62`
-- PNG framebuffer download
-- No API calls or backend process
-
-## Install the source-analysis package
+macOS or Linux:
 
 ```bash
-python -m pip install -e '.[dev]'
+source .venv/bin/activate
+cp .env.example .env
+python -m pip install --upgrade pip
+pip install -e '.[dev]'
+python -m pip check
 ```
 
-## Use
-
-```python
-from discrete_ai import commit_compile, render_result
-
-result = commit_compile(".", "example.py")
-print(render_result(result))
-```
-
-## Test and validate
+## Run
 
 ```bash
-ruff check discrete_ai.py tests
-pytest
+python -m cyglobs_app
+```
+
+Or use the installed command:
+
+```bash
+discrete-art-studio
+```
+
+Open `http://127.0.0.1:8000`.
+
+## Validate
+
+```bash
+ruff check cyglobs_app.py graphics_runtime.py cyglobs_framework tests
+pytest --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
 python -m build
 ```
 
-## Package contents
+## Runtime capabilities
 
-- `discrete_ai.py` — runtime implementation
-- `tests/test_discrete_ai.py` — automated tests
-- `pyproject.toml` — package and development configuration
-- `.github/workflows/python-ci.yml` — lint, test, and build automation
-- `.github/workflows/project-progress.yml` — weighted completion report
-- `SPEC.md` — technical specification
-- `STATUS.md` — milestone state
-- `index.html`, `styles.css`, `cyglobsgl.css` — Art Studio interface
-- `app.js` — studio controls and gallery behavior
-- `cyglobsgl.js` — browser-native CyGlobsGL MVP and framebuffer renderer
-
-## Safety model
-
-- Repository-relative paths only
-- No shell invocation
-- No arbitrary expression evaluation
-- Explicit commit manifest rather than automatic repository mutation
-- Browser renderer operates locally without uploading prompts or images
+- Static website serving
+- CyGlobs RPC at `/rpc`
+- SQLite users, creations, likes, and credits
+- PBKDF2 password hashing
+- HMAC-signed expiring access tokens
+- Base64 image uploads with type and size restrictions
+- External image-provider requests through `urllib`
+- Optional Stripe Checkout through direct HTTPS requests
+- Local CyGlobsGL rendering when external generation is unavailable
