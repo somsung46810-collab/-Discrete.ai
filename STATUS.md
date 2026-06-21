@@ -1,8 +1,8 @@
 # Discrete Art Studio Status
 
-Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, and the repository image-generation adapter. The production runtime remains Python 3.11+ standard library only.
+Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, the repository image-generation adapter, and a native SSH-based continuous deployment workflow.
 
-## Current completion
+## Current product completion
 
 | Component | Previous | Current | State |
 |---|---:|---:|---|
@@ -14,22 +14,41 @@ Discrete Art Studio runs on the embedded CyGlobs Python framework, CyGlobsGL, an
 | CyGlobsGL live rendering | 20% | 86% | Browser framebuffer is the automatic validated fallback |
 | Real AI image generation | 10% | 84% | Provider modes, image data decoding, URLs, local storage, and preview are implemented |
 | Authentication and user profiles | 0% | 78% | Registration, login, signed tokens, profile lookup, and credits are implemented |
-| Database, saved creations, likes | 0% | 82% | Native SQLite persistence, creation storage, and likes are implemented |
+| Database, saved creations, likes | 0% | 84% | Native SQLite persistence and versioned migrations are implemented |
 | File storage and downloads | 15% | 88% | Generated output is persisted and downloadable in PNG, WebP, or JPEG |
 | Payments or usage credits | 0% | 60% | Local credits and direct checkout requests are implemented |
-| Testing, security, and deployment | 30% | 82% | Provider tests, packet sync tests, native HTTP tests, coverage, and linting are present |
+| Testing, security, and deployment | 30% | 90% | CI, deployment artifacts, environments, migrations, health checks, releases, and rollback are implemented |
+
+## Continuous deployment completion
+
+| Deployment area | Previous | Current | State |
+|---|---:|---:|---|
+| Automated builds | 85% | 95% | Dependency checks, tests, package builds, source archive, and checksums |
+| Automated tests and linting | 80% | 92% | Python 3.11/3.12 CI plus deployment-gate validation |
+| Build artifact creation | 65% | 95% | Wheel, source distribution, deployment archive, and SHA-256 manifest |
+| Release publishing | 10% | 85% | Successful tagged production deployments publish GitHub Releases |
+| Staging deployment | 0% | 88% | Successful main CI deploys through the staging environment |
+| Production deployment | 0% | 85% | Manual or version-tag promotion through the production environment |
+| Secrets and environment management | 20% | 85% | GitHub environment secrets and variables produce a protected remote environment file |
+| Database migration execution | 0% | 90% | Versioned SQLite migrations run before service promotion |
+| Deployment approvals | 0% | 80% | GitHub production environment supports required-reviewer approval gates |
+| Health checks and rollback | 10% | 92% | `/api/health` polling and automatic previous-release restoration |
+| Release tagging and promotion | 0% | 85% | Version tags promote to production and generate releases |
+| **Continuous deployment implementation** | **35%** | **89%** | Workflow and scripts are complete; live execution still requires environment configuration |
 
 ## Overall estimate
 
 - Local procedural-art MVP: **96%**
-- Installable embedded full-stack application: **89%**
-- Production service with configured providers: **80%**
+- Installable embedded full-stack application: **90%**
+- Production service with configured providers: **84%**
+- Continuous deployment implementation: **89%**
+- Operationally verified deployment: **55%** until GitHub environments, host secrets, and the first successful deployment run are confirmed
 
 ## Remaining work
 
-1. Supply and validate live provider credentials.
-2. Add throttling, quotas, and provider cost controls.
-3. Add verified payment settlement.
-4. Add SQLite migrations and backups.
-5. Add account recovery and rate limiting.
-6. Add browser automation and load tests.
+1. Create the `staging` and `production` GitHub environments.
+2. Add environment-scoped SSH, provider, signing, and deployment secrets.
+3. Configure distinct remote roots and ports.
+4. Run and verify the first staging deployment.
+5. Enable required reviewers for production.
+6. Promote a tested version tag and confirm release publication and rollback behavior.
