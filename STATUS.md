@@ -2,7 +2,7 @@
 
 ## Dependency resolution
 
-The repository now has a unified runtime dependency set in both `requirements.txt` and `pyproject.toml` for:
+The repository uses a native Python stack with synchronized declarations in `requirements.txt` and `pyproject.toml`:
 
 - FastAPI and Uvicorn
 - Pydantic settings and email validation
@@ -12,8 +12,10 @@ The repository now has a unified runtime dependency set in both `requirements.tx
 - HTTP image-provider integration
 - Pillow image support
 - Stripe checkout
-- Pytest, coverage, Ruff, and mypy development tooling
-- Docker and GitHub Actions deployment validation
+- Pytest, coverage, Ruff, and mypy
+- GitHub Actions for native Python validation
+
+Flask is not used. Container deployment is not part of the supported stack.
 
 ## Current completion
 
@@ -22,27 +24,26 @@ The repository now has a unified runtime dependency set in both `requirements.tx
 | Responsive website and visual design | 90% | 92% | Responsive interface remains operational |
 | Prompt creation studio | 80% | 88% | CyGlobs controls and backend creation model are present |
 | Discovery gallery and model cards | 85% | 88% | Public creation-list API and gallery UI are present |
-| Flask API structure | 65% | 100% replaced | Flask was removed; FastAPI is now the supported service layer |
-| CyGlobs Python integration | 25% | 82% | Framework components are embedded and RPC-capable |
-| CyGlobsGL live rendering | 20% | 78% | Browser framebuffer, MVP transforms, modes, and packet output work |
-| Real AI image generation | 10% | 55% | Provider adapter is implemented; a provider URL and token are required |
+| Flask API structure | 65% | 100% replaced | FastAPI is the supported service layer |
+| CyGlobs Python integration | 25% | 84% | Framework components are embedded and dependency-aligned |
+| CyGlobsGL live rendering | 20% | 80% | Browser framebuffer, MVP transforms, modes, and packets work |
+| Real AI image generation | 10% | 55% | Provider adapter is implemented; provider credentials are required |
 | Authentication and user profiles | 0% | 75% | Registration, login, JWT identity, profile, and credits are implemented |
-| Database, saved creations, likes | 0% | 80% | SQLAlchemy models, SQLite default, creation persistence, and likes are implemented |
-| File storage and downloads | 15% | 75% | Validated uploads, local storage serving, and canvas PNG downloads are implemented |
-| Payments or usage credits | 0% | 60% | Credits and Stripe Checkout are implemented; webhook settlement still remains |
-| Testing, security, and deployment | 30% | 72% | Tests, password hashing, JWT, Docker, pip checks, and CI container builds are present |
+| Database, saved creations, likes | 0% | 80% | SQLAlchemy models, SQLite, persistence, and likes are implemented |
+| File storage and downloads | 15% | 75% | Upload validation, local storage, and PNG downloads are implemented |
+| Payments or usage credits | 0% | 60% | Credits and Stripe Checkout are implemented |
+| Testing, security, and deployment | 30% | 74% | Native Python CI, pip checks, tests, hashing, and JWT are present |
 
 ## Overall estimate
 
-- Local procedural-art MVP: **93%**
-- Installable full-stack application: **78%**
-- Production service with external providers: **68%**
+- Local procedural-art MVP: **94%**
+- Installable full-stack application: **80%**
+- Production service with external providers: **69%**
 
 ## Remaining production work
 
-1. Configure a real image-generation provider using `DISCRETE_IMAGE_PROVIDER_URL` and `DISCRETE_IMAGE_PROVIDER_TOKEN`.
+1. Configure a real image-generation provider.
 2. Add Stripe webhook verification and idempotent credit settlement.
-3. Replace local storage with an object-storage adapter for multi-instance deployment.
-4. Add refresh tokens, email verification, password reset, rate limiting, and account administration.
-5. Add database migrations and PostgreSQL deployment configuration.
-6. Connect the browser account controls to the authentication and creation APIs.
+3. Add database migrations and optional PostgreSQL configuration.
+4. Add refresh tokens, email verification, password reset, and rate limiting.
+5. Connect all browser account controls to the authentication and creation APIs.
