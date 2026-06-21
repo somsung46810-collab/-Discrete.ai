@@ -12,8 +12,16 @@ from cyglobsgl_generation import (
 
 
 def provider_features():
-    """Backward-compatible alias for the local CyGlobsGL feature report."""
-    return engine_features()
+    """Backward-compatible local engine report used by existing HTTP routes."""
+    features = engine_features()
+    return {
+        **features,
+        "real_ai_generation": False,
+        "provider": "cyglobsgl-python",
+        "endpoint": "local",
+        "response_field": "local-svg",
+        "cyglobsgl_fallback": False,
+    }
 
 
 __all__ = [
