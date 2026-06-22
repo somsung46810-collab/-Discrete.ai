@@ -22,8 +22,12 @@ def add_cyglobs_runtime(source: Path) -> None:
         "cyglobsgl.js",
         "cyglobsgl.css",
         "cyglobs_app.py",
+        "media_conversion.py",
     ):
         (source / name).write_text("runtime", encoding="utf-8")
+    scripts = source / "scripts"
+    scripts.mkdir()
+    (scripts / "convert_media.py").write_text("runtime", encoding="utf-8")
     package = source / "cyglobs_framework"
     package.mkdir()
     for name in (
@@ -55,14 +59,16 @@ def test_dupe_release_copies_full_framework_and_preserves_shared_storage(tmp_pat
     assert (target / "app.txt").read_text(encoding="utf-8") == "immutable release"
     assert (target / "storage").resolve() == shared_storage.resolve()
     assert (target / "cyglobs_framework" / "services.py").is_file()
+    assert (target / "media_conversion.py").is_file()
     manifest = json.loads((target / "DUPE_MANIFEST.json").read_text(encoding="utf-8"))
     assert manifest["operation"] == "DUPE_AND_DEDUPE"
     assert manifest["runtime"] == "CyGlobs Python Framework For Full Stack Developers"
     assert manifest["renderer"] == "CyGlobsGL"
     assert manifest["framework_injected"] is True
     assert manifest["cyglobsgl_injected"] is True
+    assert manifest["media_interjection"] == "audio_to_video_to_image"
+    assert manifest["media_dedupe"] == "sha256 canonical output index"
     assert manifest["external_provider"] is False
-    assert manifest["dedupe_strategy"] == "single canonical active framework package"
 
 
 def test_dupe_release_rejects_incomplete_framework(tmp_path):
@@ -70,7 +76,7 @@ def test_dupe_release_rejects_incomplete_framework(tmp_path):
     source = root / "releases" / "release-a"
     source.mkdir(parents=True)
     add_cyglobs_runtime(source)
-    (source / "cyglobs_framework" / "services.py").unlink()
+    (source / "media_conversion.py").unlink()
 
     result = run_dupe(root, "release-a", "release-b")
 

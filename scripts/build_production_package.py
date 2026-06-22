@@ -30,6 +30,8 @@ INCLUDE_FILES = [
     "discrete_ai.py",
     "graphics_runtime.py",
     "index.html",
+    "media_conversion.py",
+    "media_diagnostics.py",
     "pyproject.toml",
     "requirements.txt",
     "studio_api.py",
@@ -89,9 +91,11 @@ def write_manifest() -> None:
         )
 
     manifest = {
-        "name": "Discrete Art Studio",
-        "package": "discrete-ai",
+        "name": "CyGlobs Art Studio",
+        "package": "cyglobs-art-studio",
         "engine": "cyglobsgl-python",
+        "media_pipeline": "audio_to_video_to_image",
+        "media_dedupe": "sha256 canonical output index",
         "external_image_provider": False,
         "entrypoint": "python -m cyglobs_app",
         "health_endpoint": "/api/health",
@@ -105,13 +109,13 @@ def write_manifest() -> None:
 
 
 def create_archives() -> None:
-    zip_path = OUTPUT / "discrete-art-studio-production.zip"
+    zip_path = OUTPUT / "cyglobs-art-studio-production.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(STAGE.rglob("*")):
             if path.is_file():
                 archive.write(path, path.relative_to(OUTPUT))
 
-    tar_path = OUTPUT / "discrete-art-studio-production.tar.gz"
+    tar_path = OUTPUT / "cyglobs-art-studio-production.tar.gz"
     with tarfile.open(tar_path, "w:gz") as archive:
         archive.add(STAGE, arcname=STAGE.name)
 
