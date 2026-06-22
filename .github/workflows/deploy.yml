@@ -1,9 +1,6 @@
 name: Native Deployment
 
 on:
-  workflow_run:
-    workflows: ["Python CI"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       environment:
@@ -29,9 +26,6 @@ concurrency:
 
 jobs:
   prepare:
-    if: >-
-      github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     outputs:
       release_id: ${{ steps.meta.outputs.release_id }}
@@ -42,10 +36,7 @@ jobs:
         id: meta
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
-            SOURCE_SHA="${{ github.event.workflow_run.head_sha }}"
-            TARGET_ENVIRONMENT="staging"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             SOURCE_SHA="${{ github.event.inputs.ref }}"
             TARGET_ENVIRONMENT="${{ github.event.inputs.environment }}"
           else
