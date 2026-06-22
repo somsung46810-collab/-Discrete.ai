@@ -5,7 +5,7 @@ import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -64,7 +64,9 @@ class TriangulationPipeline:
         self.entries: list[TriangulatedEntry] = []
         self.changes: dict[str, Any] = {}
 
-    def DiscreteChanges(self, changes: dict[str, Any] | None = None) -> "TriangulationPipeline":
+    def DiscreteChanges(
+        self, changes: dict[str, Any] | None = None
+    ) -> "TriangulationPipeline":
         self.changes = dict(changes or {})
         self.entries = []
         for key in sorted(set(self.dupe) | set(self.dedupe) | set(self.changes)):
@@ -113,7 +115,9 @@ class ToTriangulate:
     def __init__(self, dupe: dict[str, Any], dedupe: dict[str, Any]) -> None:
         self.pipeline = TriangulationPipeline(dupe, dedupe)
 
-    def DiscreteChanges(self, changes: dict[str, Any] | None = None) -> TriangulationPipeline:
+    def DiscreteChanges(
+        self, changes: dict[str, Any] | None = None
+    ) -> TriangulationPipeline:
         return self.pipeline.DiscreteChanges(changes)
 
 
