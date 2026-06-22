@@ -11,7 +11,7 @@ Discrete Art Studio runs entirely on the embedded CyGlobsGL Python framework. Ar
 - `ai_generation.py` is a compatibility export only; it contains no external provider implementation.
 - `vendor/` contains replicated CyGlobs framework and CyGlobsGL source snapshots.
 
-The application does not use an external image API, Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container tooling.
+The application uses the Python standard library and the repository's CyGlobsGL runtime rather than an external web framework or image service.
 
 ## Local generation
 
@@ -69,8 +69,9 @@ Open `http://127.0.0.1:8000`.
 
 ```bash
 python scripts/check_all.py
-ruff check ai_generation.py cyglobsgl_generation.py cyglobs_app.py graphics_runtime.py cyglobs_framework scripts tests
-pytest --cov=cyglobsgl_generation --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
+python scripts/media_check.py
+ruff check ai_generation.py cyglobsgl_generation.py cyglobs_app.py graphics_runtime.py media_diagnostics.py cyglobs_framework scripts tests
+pytest --cov=cyglobsgl_generation --cov=media_diagnostics --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
 python -m build
 ```
 
@@ -88,6 +89,7 @@ Successful pushes to `main` can deploy to staging after CI. Production is promot
 - Wireframe, triangle, and contingency rendering modes
 - CyGlobs directive validation and metadata
 - Browser framebuffer rendering
+- Audio/video repository diagnostics
 - SQLite users, creations, likes, and credits
 - Local uploads and generated-image downloads
 - Native CI/CD with staging, production, migrations, health checks, releases, DUPE, and rollback
