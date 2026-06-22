@@ -5,7 +5,7 @@ import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 
 @dataclass(frozen=True)
@@ -27,6 +27,17 @@ class TriangulatedEntry:
     state: str
 
 
+@dataclass(frozen=True)
+class StatusUpdate:
+    percentage: int
+    stage: str
+    message: str
+    condition: str = "continue"
+
+
+StatusCallback = Callable[[StatusUpdate], None]
+
+
 @dataclass
 class ReplBucketSet:
     buckets: dict[str, list[dict[str, Any]]] = field(
@@ -38,6 +49,7 @@ class ReplBucketSet:
             "conflicts": [],
         }
     )
+    status_updates: list[StatusUpdate] = field(default_factory=list)
 
     def add(self, entry: TriangulatedEntry) -> None:
         bucket = {
@@ -56,20 +68,55 @@ class ReplBucketSet:
     def to_dict(self) -> dict[str, list[dict[str, Any]]]:
         return self.buckets
 
+    def status(self) -> list[dict[str, Any]]:
+        return [asdict(update) for update in self.status_updates]
+
 
 class TriangulationPipeline:
-    def __init__(self, dupe: dict[str, Any], dedupe: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        dupe: dict[str, Any],
+        dedupe: dict[str, Any],
+        status_callback: StatusCallback | None = None,
+    ) -> None:
         self.dupe = dict(dupe)
         self.dedupe = dict(dedupe)
         self.entries: list[TriangulatedEntry] = []
         self.changes: dict[str, Any] = {}
+        self.status_updates: list[StatusUpdate] = []
+        self.status_callback = status_callback
+
+    def _status(
+        self,
+        percentage: int,
+        stage: str,
+        message: str,
+        condition: str = "continue",
+    ) -> None:
+        update = StatusUpdate(
+            percentage=max(0, min(100, percentage)),
+            stage=stage,
+            message=message,
+            condition=condition,
+        )
+        self.status_updates.append(update)
+        if self.status_callback is not None:
+            self.status_callback(update)
 
     def DiscreteChanges(
         self, changes: dict[str, Any] | None = None
     ) -> "TriangulationPipeline":
         self.changes = dict(changes or {})
         self.entries = []
-        for key in sorted(set(self.dupe) | set(self.dedupe) | set(self.changes)):
+        self.status_updates = []
+        keys = sorted(set(self.dupe) | set(self.dedupe) | set(self.changes))
+        self._status(0, "read", "Read DUPE, DEDUPE, and explicit change inputs")
+
+        if not keys:
+            self._status(80, "evaluate", "No values required triangulation")
+            return self
+
+        for index, key in enumerate(keys, start=1):
             dupe_value = self.dupe.get(key)
             dedupe_value = self.dedupe.get(key)
             has_dupe = key in self.dupe
@@ -100,20 +147,49 @@ class TriangulationPipeline:
                     state=state,
                 )
             )
+            percentage = round(index / len(keys) * 80)
+            self._status(
+                percentage,
+                "evaluate",
+                f"Evaluated {index} of {len(keys)} triangulation keys",
+            )
         return self
 
     def ReplBuckets(self) -> ReplBucketSet:
         if not self.entries:
             self.DiscreteChanges()
         result = ReplBucketSet()
-        for entry in self.entries:
-            result.add(entry)
+        total = len(self.entries)
+
+        if total == 0:
+            self._status(100, "print", "REPL buckets complete", condition="endif")
+        else:
+            for index, entry in enumerate(self.entries, start=1):
+                result.add(entry)
+                percentage = 80 + round(index / total * 20)
+                condition = "endif" if index == total else "continue"
+                self._status(
+                    percentage,
+                    "print",
+                    f"Printed {index} of {total} entries into REPL buckets",
+                    condition=condition,
+                )
+
+        result.status_updates = list(self.status_updates)
         return result
+
+    def status(self) -> list[dict[str, Any]]:
+        return [asdict(update) for update in self.status_updates]
 
 
 class ToTriangulate:
-    def __init__(self, dupe: dict[str, Any], dedupe: dict[str, Any]) -> None:
-        self.pipeline = TriangulationPipeline(dupe, dedupe)
+    def __init__(
+        self,
+        dupe: dict[str, Any],
+        dedupe: dict[str, Any],
+        status_callback: StatusCallback | None = None,
+    ) -> None:
+        self.pipeline = TriangulationPipeline(dupe, dedupe, status_callback)
 
     def DiscreteChanges(
         self, changes: dict[str, Any] | None = None
@@ -121,8 +197,12 @@ class ToTriangulate:
         return self.pipeline.DiscreteChanges(changes)
 
 
-def triangulate(dupe: dict[str, Any], dedupe: dict[str, Any]) -> ToTriangulate:
-    return ToTriangulate(dupe, dedupe)
+def triangulate(
+    dupe: dict[str, Any],
+    dedupe: dict[str, Any],
+    status_callback: StatusCallback | None = None,
+) -> ToTriangulate:
+    return ToTriangulate(dupe, dedupe, status_callback)
 
 
 def pack_bit_fields(data: bytes) -> str:
@@ -177,6 +257,8 @@ def render_result(result: PipelineResult) -> str:
 __all__ = [
     "PipelineResult",
     "ReplBucketSet",
+    "StatusCallback",
+    "StatusUpdate",
     "ToTriangulate",
     "TriangulatedEntry",
     "TriangulationPipeline",
