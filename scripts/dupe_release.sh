@@ -46,22 +46,39 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Copy the immutable application release. Shared data is never copied.
-# Existing storage links are replaced with the target environment's shared link.
 cp -a --reflink=auto "$SOURCE_DIR/." "$TARGET_DIR/"
 rm -rf "$TARGET_DIR/storage"
 ln -sfn "$SHARED_DIR/storage" "$TARGET_DIR/storage"
+
+required_runtime=(
+  "cyglobsgl_generation.py"
+  "graphics_runtime.py"
+  "cyglobsgl.js"
+  "cyglobsgl.css"
+  "cyglobs_app.py"
+  "cyglobs_framework"
+)
+
+for runtime_path in "${required_runtime[@]}"; do
+  if [[ ! -e "$TARGET_DIR/$runtime_path" ]]; then
+    echo "CyGlobsGL runtime missing after DUPE: $runtime_path" >&2
+    exit 5
+  fi
+done
 
 cat > "$TARGET_DIR/DUPE_MANIFEST.json" <<EOF
 {
   "operation": "DUPE",
   "source_release": "$SOURCE_RELEASE_ID",
   "target_release": "$TARGET_RELEASE_ID",
-  "shared_storage": "$SHARED_DIR/storage"
+  "shared_storage": "$SHARED_DIR/storage",
+  "runtime": "CyGlobsGL Python",
+  "cyglobsgl_injected": true,
+  "external_provider": false
 }
 EOF
 
 DUPE_COMPLETE=1
 trap - EXIT
 
-echo "DUPE complete: $SOURCE_RELEASE_ID -> $TARGET_RELEASE_ID"
+echo "DUPE complete with CyGlobsGL runtime: $SOURCE_RELEASE_ID -> $TARGET_RELEASE_ID"
