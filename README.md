@@ -9,6 +9,7 @@ CyGlobs Art Studio runs on the embedded CyGlobs Python Framework For Full Stack 
 - `cyglobsgl_generation.py` creates deterministic procedural SVG artwork locally.
 - `graphics_runtime.py` and `cyglobsgl.js` provide directives, MVP rendering, metadata, and browser framebuffer output.
 - `media_conversion.py` converts audio into a waveform video, extracts a representative image, and deduplicates matching outputs by SHA-256.
+- `discrete_ai.py` provides source evaluation plus triangulated DUPE/DEDUPE change resolution and REPL buckets.
 - `ai_generation.py` remains only as a compatibility import and does not provide an external AI service.
 
 The runtime is treated as a normal full-stack Python application. Its operation does not depend on an AI identity, CI gate, CD system, or external image model.
@@ -40,6 +41,34 @@ python -m cyglobs_app
 
 Open `http://127.0.0.1:8000`.
 
+## Triangulate DUPE and DEDUPE changes
+
+```python
+from discrete_ai import ToTriangulate
+
+buckets = (
+    ToTriangulate(
+        {"mode": "dupe", "shared": 1},
+        {"mode": "dedupe", "shared": 1},
+    )
+    .DiscreteChanges({"mode": "triangulated"})
+    .ReplBuckets()
+)
+
+print(buckets.to_dict())
+print(buckets.replay())
+```
+
+The chain separates results into:
+
+- `matched`
+- `changed`
+- `dupe_only`
+- `dedupe_only`
+- `conflicts`
+
+Explicit values passed to `DiscreteChanges()` override conflicting DUPE and DEDUPE values. REPL replay uses a deterministic bucket order.
+
 ## Convert audio to video to image
 
 ```bash
@@ -66,7 +95,7 @@ When a new video or image has the same SHA-256 hash as an existing output, the d
 ```bash
 python scripts/check_all.py
 python scripts/media_check.py
-ruff check ai_generation.py cyglobsgl_generation.py cyglobs_app.py graphics_runtime.py media_conversion.py media_diagnostics.py cyglobs_framework scripts tests
+ruff check ai_generation.py cyglobsgl_generation.py cyglobs_app.py discrete_ai.py graphics_runtime.py media_conversion.py media_diagnostics.py cyglobs_framework scripts tests
 pytest
 python -m build
 ```
@@ -97,6 +126,8 @@ No GitHub Actions workflows, CI pipeline, or automatic deployment trigger are re
 
 ## Capabilities
 
+- Triangulated DUPE/DEDUPE change resolution
+- Deterministic REPL buckets and replay
 - Local CyGlobsGL Python artwork generation
 - Audio-to-waveform-video conversion
 - Video-frame image extraction
