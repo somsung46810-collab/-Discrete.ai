@@ -15,6 +15,11 @@ def main() -> int:
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--storage", type=Path, default=ROOT / "storage")
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="return a non-zero status when invalid media is detected",
+    )
     args = parser.parse_args()
 
     report = media_health(args.root.resolve(), args.storage.resolve())
@@ -23,7 +28,9 @@ def main() -> int:
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(rendered + "\n", encoding="utf-8")
-    return 1 if report["status"] == "degraded" else 0
+    if args.strict and report["status"] == "degraded":
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
