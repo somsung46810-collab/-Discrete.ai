@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cyglobs-art-studio"
-version = "0.6.0"
-description = "CyGlobs full-stack art studio with manual DUPE and DEDUPE release operations"
+version = "0.7.0"
+description = "CyGlobs full-stack art studio with manual DUPE, DEDUPE, and media conversion operations"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -21,6 +21,7 @@ dependencies = []
 cyglobs-art-studio = "cyglobs_app:main"
 cyglobs-migrate = "scripts.migrate:migrate"
 cyglobs-media-check = "scripts.media_check:main"
+cyglobs-media-convert = "scripts.convert_media:main"
 
 [project.optional-dependencies]
 dev = [
@@ -37,6 +38,7 @@ py-modules = [
   "cyglobs_app",
   "discrete_ai",
   "graphics_runtime",
+  "media_conversion",
   "media_diagnostics",
   "studio_api",
 ]
