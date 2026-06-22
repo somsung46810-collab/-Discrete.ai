@@ -3,9 +3,9 @@ requires = ["setuptools>=69"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "discrete-ai"
-version = "0.5.0"
-description = "Discrete Art Studio powered only by the CyGlobsGL Python framework"
+name = "cyglobs-art-studio"
+version = "0.6.0"
+description = "CyGlobs full-stack art studio with manual DUPE and DEDUPE release operations"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
@@ -18,9 +18,9 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
-discrete-art-studio = "cyglobs_app:main"
-discrete-migrate = "scripts.migrate:migrate"
-discrete-media-check = "scripts.media_check:main"
+cyglobs-art-studio = "cyglobs_app:main"
+cyglobs-migrate = "scripts.migrate:migrate"
+cyglobs-media-check = "scripts.media_check:main"
 
 [project.optional-dependencies]
 dev = [
