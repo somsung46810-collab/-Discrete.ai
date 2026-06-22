@@ -1,12 +1,12 @@
 # Native Continuous Deployment
 
-Discrete Art Studio deploys without Docker, a Python web framework, or an external image-generation service. GitHub Actions builds the CyGlobsGL Python application and deploys it to a Linux host over SSH.
+Discrete Art Studio uses a direct Python deployment model. GitHub Actions builds the CyGlobsGL Python application and deploys it to a Linux host over SSH.
 
 ## Workflow behavior
 
 ### Continuous integration
 
-`.github/workflows/python-ci.yml` runs repository checks, CyGlobsGL generation tests, package builds, and production packaging on pushes and pull requests to `main`.
+`.github/workflows/python-ci.yml` runs repository checks, CyGlobsGL generation tests, media diagnostics, package builds, and production packaging on pushes and pull requests to `main`.
 
 ### Automatic staging
 

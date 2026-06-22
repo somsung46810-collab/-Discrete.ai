@@ -54,4 +54,5 @@ The browser studio provides:
 - Writable `DISCRETE_STORAGE_DIR`
 - No image-provider credentials
 - No generation network access
-- No Flask, FastAPI, Uvicorn, Pydantic, SQLAlchemy, or container runtime
+- Python standard-library HTTP runtime
+- Direct Linux process deployment through systemd
