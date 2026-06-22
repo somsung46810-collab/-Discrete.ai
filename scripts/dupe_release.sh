@@ -36,8 +36,7 @@ if [[ -e "$TARGET_DIR" ]]; then
   exit 4
 fi
 
-mkdir -p "$RELEASES_DIR" "$SHARED_DIR/storage"
-mkdir -p "$TARGET_DIR"
+mkdir -p "$RELEASES_DIR" "$SHARED_DIR/storage" "$TARGET_DIR"
 
 cleanup() {
   if [[ "${DUPE_COMPLETE:-0}" != "1" ]]; then
@@ -50,35 +49,41 @@ cp -a --reflink=auto "$SOURCE_DIR/." "$TARGET_DIR/"
 rm -rf "$TARGET_DIR/storage"
 ln -sfn "$SHARED_DIR/storage" "$TARGET_DIR/storage"
 
-required_runtime=(
-  "cyglobsgl_generation.py"
-  "graphics_runtime.py"
-  "cyglobsgl.js"
-  "cyglobsgl.css"
-  "cyglobs_app.py"
-  "cyglobs_framework"
-)
-
-for runtime_path in "${required_runtime[@]}"; do
-  if [[ ! -e "$TARGET_DIR/$runtime_path" ]]; then
-    echo "CyGlobsGL runtime missing after DUPE: $runtime_path" >&2
+for runtime_path in \
+  cyglobsgl_generation.py \
+  graphics_runtime.py \
+  cyglobsgl.js \
+  cyglobsgl.css \
+  cyglobs_app.py \
+  cyglobs_framework/__init__.py \
+  cyglobs_framework/comparators.py \
+  cyglobs_framework/config.py \
+  cyglobs_framework/contingency.py \
+  cyglobs_framework/inverse_ops.py \
+  cyglobs_framework/protocol.py \
+  cyglobs_framework/services.py; do
+  if [[ ! -f "$TARGET_DIR/$runtime_path" ]]; then
+    echo "CyGlobs full-stack runtime missing after DUPE: $runtime_path" >&2
     exit 5
   fi
 done
 
 cat > "$TARGET_DIR/DUPE_MANIFEST.json" <<EOF
 {
-  "operation": "DUPE",
+  "operation": "DUPE_AND_DEDUPE",
   "source_release": "$SOURCE_RELEASE_ID",
   "target_release": "$TARGET_RELEASE_ID",
   "shared_storage": "$SHARED_DIR/storage",
-  "runtime": "CyGlobsGL Python",
+  "runtime": "CyGlobs Python Framework For Full Stack Developers",
+  "renderer": "CyGlobsGL",
+  "framework_injected": true,
   "cyglobsgl_injected": true,
-  "external_provider": false
+  "external_provider": false,
+  "dedupe_strategy": "single canonical active framework package"
 }
 EOF
 
 DUPE_COMPLETE=1
 trap - EXIT
 
-echo "DUPE complete with CyGlobsGL runtime: $SOURCE_RELEASE_ID -> $TARGET_RELEASE_ID"
+echo "DUPE complete with CyGlobs full-stack framework: $SOURCE_RELEASE_ID -> $TARGET_RELEASE_ID"
