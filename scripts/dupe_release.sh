@@ -55,6 +55,8 @@ for runtime_path in \
   cyglobsgl.js \
   cyglobsgl.css \
   cyglobs_app.py \
+  media_conversion.py \
+  scripts/convert_media.py \
   cyglobs_framework/__init__.py \
   cyglobs_framework/comparators.py \
   cyglobs_framework/config.py \
@@ -78,12 +80,14 @@ cat > "$TARGET_DIR/DUPE_MANIFEST.json" <<EOF
   "renderer": "CyGlobsGL",
   "framework_injected": true,
   "cyglobsgl_injected": true,
+  "media_interjection": "audio_to_video_to_image",
+  "media_dedupe": "sha256 canonical output index",
   "external_provider": false,
-  "dedupe_strategy": "single canonical active framework package"
+  "dedupe_strategy": "single canonical active framework and media outputs"
 }
 EOF
 
 DUPE_COMPLETE=1
 trap - EXIT
 
-echo "DUPE complete with CyGlobs full-stack framework: $SOURCE_RELEASE_ID -> $TARGET_RELEASE_ID"
+echo "DUPE complete with CyGlobs full-stack media framework: $SOURCE_RELEASE_ID -> $TARGET_RELEASE_ID"
