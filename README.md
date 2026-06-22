@@ -1,60 +1,32 @@
-# Discrete.ai
+# CyGlobs Art Studio
 
-Discrete Art Studio runs entirely on the embedded CyGlobsGL Python framework. Artwork generation is local, deterministic, and does not require an external image provider or model API.
+CyGlobs Art Studio runs on the embedded CyGlobs Python Framework For Full Stack Developers and CyGlobsGL. Artwork generation is local, deterministic, and independent of external AI providers.
 
 ## Architecture
 
 - `cyglobs_app.py` provides the standard-library HTTP and JSON runtime.
-- `cyglobs_framework/` provides protocol envelopes, comparison, operation routing, retry, and contingency behavior.
+- `cyglobs_framework/` provides protocol envelopes, comparison, routing, retry, inverse operations, and contingency behavior.
 - `cyglobsgl_generation.py` creates deterministic procedural SVG artwork locally.
-- `graphics_runtime.py` and `cyglobsgl.js` provide directive packets, MVP rendering, metadata, and browser framebuffer rendering.
-- `ai_generation.py` is a compatibility export only; it contains no external provider implementation.
-- `vendor/` contains replicated CyGlobs framework and CyGlobsGL source snapshots.
+- `graphics_runtime.py` and `cyglobsgl.js` provide directives, MVP rendering, metadata, and browser framebuffer output.
+- `ai_generation.py` remains only as a compatibility import and does not provide an external AI service.
 
-The application uses the Python standard library and the repository's CyGlobsGL runtime rather than an external web framework or image service.
-
-## Local generation
-
-The browser calls the CyGlobs RPC `generate_image` operation. The Python runtime derives a deterministic seed from the prompt, style, mode, aspect ratio, and complexity setting, then writes a local SVG under `storage/`.
-
-Supported modes:
-
-- Wireframe
-- Triangles
-- Contingency
-
-Supported aspects:
-
-- 1:1
-- 16:9
-- 9:16
-
-Output format:
-
-- SVG
-
-No provider credential or outbound network request is required.
+The runtime is treated as a normal full-stack Python application. Its operation does not depend on an AI identity, CI gate, CD system, or external image model.
 
 ## Install
 
 ```bash
 python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e '.[dev]'
 ```
 
-Windows:
+On Windows PowerShell:
 
 ```powershell
 .venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install -e ".[dev]"
-```
-
-macOS or Linux:
-
-```bash
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -e '.[dev]'
 ```
 
 ## Run
@@ -65,21 +37,38 @@ python -m cyglobs_app
 
 Open `http://127.0.0.1:8000`.
 
-## Validate
+## Validate locally
 
 ```bash
 python scripts/check_all.py
 python scripts/media_check.py
 ruff check ai_generation.py cyglobsgl_generation.py cyglobs_app.py graphics_runtime.py media_diagnostics.py cyglobs_framework scripts tests
-pytest --cov=cyglobsgl_generation --cov=media_diagnostics --cov=cyglobs_app --cov=cyglobs_framework --cov=graphics_runtime
+pytest
 python -m build
 ```
 
-## Continuous deployment
+## DUPE and DEDUPE release model
 
-`.github/workflows/deploy.yml` provides native staging and production deployment over SSH. It builds release artifacts, injects only application and optional payment secrets, runs versioned SQLite migrations, restarts `cyglobs_app`, checks `/api/health`, and restores the previous release when a health check fails.
+The project uses explicit local release operations rather than CI/CD automation.
 
-Successful pushes to `main` can deploy to staging after CI. Production is promoted manually or with a version tag. No external image-provider secrets are needed.
+Create a source release under a release root, then duplicate it:
+
+```bash
+bash scripts/dupe_release.sh /home/cyglobs/apps/studio release-source release-target
+```
+
+The DUPE operation:
+
+- copies the immutable application release,
+- preserves shared storage through a symbolic link,
+- verifies the complete CyGlobs full-stack framework,
+- verifies CyGlobsGL runtime files,
+- rejects incomplete targets,
+- removes partial duplicates after failure,
+- writes `DUPE_MANIFEST.json`,
+- records a single canonical active framework package as the DEDUPE strategy.
+
+No GitHub Actions workflows, CI pipeline, or automatic deployment trigger are required.
 
 ## Capabilities
 
@@ -92,4 +81,4 @@ Successful pushes to `main` can deploy to staging after CI. Production is promot
 - Audio/video repository diagnostics
 - SQLite users, creations, likes, and credits
 - Local uploads and generated-image downloads
-- Native CI/CD with staging, production, migrations, health checks, releases, DUPE, and rollback
+- Manual DUPE, DEDUPE, health verification, and rollback operations
