@@ -25,6 +25,7 @@ cyglobs-media-convert = "scripts.convert_media:main"
 
 [project.optional-dependencies]
 dev = [
+  "build>=1.2",
   "pytest>=8.0",
   "pytest-cov>=6.0",
   "ruff>=0.9",
