@@ -6,8 +6,12 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
     groups:
-      safe-python-updates:
+      interlinked-stateless-python:
         update-types: ["minor", "patch"]
+        exclude-patterns: ["sqlalchemy", "django", "redis", "alembic", "psycopg*", "pymongo"]
+      interlocked-stateful-python:
+        patterns: ["sqlalchemy", "django", "redis", "alembic", "psycopg*", "pymongo"]
+        update-types: ["patch"]
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
@@ -17,8 +21,12 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
     groups:
-      safe-javascript-updates:
+      interlinked-stateless-javascript:
         update-types: ["minor", "patch"]
+        exclude-patterns: ["@prisma/*", "prisma", "typeorm", "sequelize", "mongoose", "redis", "ioredis", "express-session", "next-auth", "better-sqlite3", "sqlite3", "pg"]
+      interlocked-stateful-javascript:
+        patterns: ["@prisma/*", "prisma", "typeorm", "sequelize", "mongoose", "redis", "ioredis", "express-session", "next-auth", "better-sqlite3", "sqlite3", "pg"]
+        update-types: ["patch"]
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
@@ -27,3 +35,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      interjected-workflows:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
