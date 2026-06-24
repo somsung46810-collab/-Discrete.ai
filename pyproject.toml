@@ -19,6 +19,7 @@ dependencies = []
 
 [project.scripts]
 cyglobs-art-studio = "cyglobs_app:main"
+discrete-art-studio = "cyglobs_app:main"
 cyglobs-migrate = "scripts.migrate:migrate"
 cyglobs-media-check = "scripts.media_check:main"
 cyglobs-media-convert = "scripts.convert_media:main"
