@@ -48,6 +48,17 @@ def bits_to_hexadecimal(bits: str) -> str:
     return f"{int(normalized, 2):0{width}x}"
 
 
+def hexadecimal_to_bits(hexadecimal: str) -> str:
+    normalized = hexadecimal.strip().lower()
+    if normalized.startswith("0x"):
+        normalized = normalized[2:]
+    if not normalized:
+        raise ValueError("hexadecimal must not be empty")
+    if any(character not in "0123456789abcdef" for character in normalized):
+        raise ValueError("hexadecimal must contain only 0-9 and a-f")
+    return f"{int(normalized, 16):0{len(normalized) * 4}b}"
+
+
 @dataclass
 class ReplBucketSet:
     buckets: dict[str, list[dict[str, Any]]] = field(
@@ -73,12 +84,12 @@ class ReplBucketSet:
         }[entry.state]
         self.buckets[bucket].append(asdict(entry))
 
-    def Pool(self, bits: str) -> "ReplBucketSet":
+    def Pool(self, hexadecimal: str) -> "ReplBucketSet":
         self.pools.append(
             {
-                "source": bits,
-                "encoding": "bits->hexadecimal",
-                "hexadecimal": bits_to_hexadecimal(bits),
+                "source": hexadecimal,
+                "encoding": "hexadecimal->bits",
+                "bits": hexadecimal_to_bits(hexadecimal),
             }
         )
         return self
@@ -103,6 +114,8 @@ class ReplBucketSet:
     def to_dict(self) -> dict[str, Any]:
         return {
             **self.buckets,
+            "bucket_stage": "pool",
+            "bucket_encoding": "hex->bits",
             "pools": list(self.pools),
             "package_update_requests": list(self.package_update_requests),
         }
@@ -201,15 +214,15 @@ class TriangulationPipeline:
         total = len(self.entries)
 
         if total == 0:
-            self._status(100, "print", "REPL buckets complete")
+            self._status(100, "pool", "REPL buckets ready for pooling")
         else:
             for index, entry in enumerate(self.entries, start=1):
                 result.add(entry)
                 percentage = 80 + round(index / total * 20)
                 self._status(
                     percentage,
-                    "print",
-                    f"Printed {index} of {total} entries into REPL buckets",
+                    "pool",
+                    f"Pooled {index} of {total} entries into REPL buckets",
                 )
 
         result.status_updates = list(self.status_updates)
@@ -302,6 +315,7 @@ __all__ = [
     "bits_to_hexadecimal",
     "commit_compile",
     "evaluate_source",
+    "hexadecimal_to_bits",
     "pack_bit_fields",
     "render_result",
     "triangulate",
