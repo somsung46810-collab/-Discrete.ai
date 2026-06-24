@@ -38,6 +38,16 @@ class StatusUpdate:
 StatusCallback = Callable[[StatusUpdate], None]
 
 
+def bits_to_hexadecimal(bits: str) -> str:
+    normalized = "".join(bits.split())
+    if not normalized:
+        raise ValueError("bits must not be empty")
+    if any(bit not in "01" for bit in normalized):
+        raise ValueError("bits must contain only 0 and 1")
+    width = (len(normalized) + 3) // 4
+    return f"{int(normalized, 2):0{width}x}"
+
+
 @dataclass
 class ReplBucketSet:
     buckets: dict[str, list[dict[str, Any]]] = field(
@@ -50,6 +60,8 @@ class ReplBucketSet:
         }
     )
     status_updates: list[StatusUpdate] = field(default_factory=list)
+    pools: list[dict[str, str]] = field(default_factory=list)
+    package_update_requests: list[dict[str, Any]] = field(default_factory=list)
 
     def add(self, entry: TriangulatedEntry) -> None:
         bucket = {
@@ -61,12 +73,39 @@ class ReplBucketSet:
         }[entry.state]
         self.buckets[bucket].append(asdict(entry))
 
+    def Pool(self, bits: str) -> "ReplBucketSet":
+        self.pools.append(
+            {
+                "source": bits,
+                "encoding": "bits->hexadecimal",
+                "hexadecimal": bits_to_hexadecimal(bits),
+            }
+        )
+        return self
+
+    def Request(
+        self,
+        package_updates: dict[str, Any] | list[str] | str,
+    ) -> "ReplBucketSet":
+        self.package_update_requests.append(
+            {
+                "type": "package_updates",
+                "request": package_updates,
+                "status": "requested",
+            }
+        )
+        return self
+
     def replay(self) -> list[dict[str, Any]]:
         order = ("matched", "changed", "dupe_only", "dedupe_only", "conflicts")
         return [item for name in order for item in self.buckets[name]]
 
-    def to_dict(self) -> dict[str, list[dict[str, Any]]]:
-        return self.buckets
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            **self.buckets,
+            "pools": list(self.pools),
+            "package_update_requests": list(self.package_update_requests),
+        }
 
     def status(self) -> list[dict[str, Any]]:
         return [asdict(update) for update in self.status_updates]
@@ -162,17 +201,15 @@ class TriangulationPipeline:
         total = len(self.entries)
 
         if total == 0:
-            self._status(100, "print", "REPL buckets complete", condition="endif")
+            self._status(100, "print", "REPL buckets complete")
         else:
             for index, entry in enumerate(self.entries, start=1):
                 result.add(entry)
                 percentage = 80 + round(index / total * 20)
-                condition = "endif" if index == total else "continue"
                 self._status(
                     percentage,
                     "print",
                     f"Printed {index} of {total} entries into REPL buckets",
-                    condition=condition,
                 )
 
         result.status_updates = list(self.status_updates)
@@ -262,6 +299,7 @@ __all__ = [
     "ToTriangulate",
     "TriangulatedEntry",
     "TriangulationPipeline",
+    "bits_to_hexadecimal",
     "commit_compile",
     "evaluate_source",
     "pack_bit_fields",
